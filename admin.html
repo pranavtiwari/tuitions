@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moderate Requests — Teacher Directory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="navbar-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-icon" aria-hidden="true">🎓</span>
+        <span>Teacher Directory</span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="index.html" class="nav-link">Browse Teachers</a>
+        <a href="submit.html" class="nav-link">Add Yourself</a>
+        <a href="admin.html" class="nav-link active">Moderate</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="setupNotice" class="alert alert-warning" style="display:none;">
+      <span>⚠️</span>
+      <div>
+        <strong>Backend not connected yet.</strong> Moderation requires deploying <code>apps-script/Code.gs</code> as a Web App and setting <code>APPS_SCRIPT_URL</code> in <code>js/config.js</code>. See <code>README.md</code> for setup steps.
+      </div>
+    </div>
+
+    <!-- Login View -->
+    <section id="loginSection" class="container-narrow" style="margin: 2rem auto;">
+      <div class="card-panel">
+        <div class="page-header" style="margin-bottom:1.25rem;">
+          <h1 style="font-size:1.55rem;">Moderator Sign In</h1>
+          <p>Enter your admin passcode to review pending teacher requests and manage the directory.</p>
+        </div>
+
+        <div id="loginError" class="alert alert-danger" style="display:none;"></div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="passcodeInput">Admin Passcode</label>
+            <input type="password" id="passcodeInput" class="form-control" placeholder="Enter moderator passcode" required autocomplete="current-password" />
+          </div>
+          <div style="margin-top:1.15rem;">
+            <button type="submit" id="loginBtn" class="btn btn-primary" style="width:100%;">Unlock Moderator Dashboard</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Dashboard View -->
+    <section id="dashboardSection" style="display:none;">
+      <div class="results-toolbar" style="margin-bottom:1.25rem;">
+        <div class="page-header" style="margin-bottom:0;">
+          <h1>Moderation Dashboard</h1>
+          <p>Approve, edit, or reject teacher submissions and keep the directory up to date.</p>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button type="button" id="refreshBtn" class="btn btn-secondary">↻ Refresh</button>
+          <button type="button" id="logoutBtn" class="btn btn-danger">Sign Out</button>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab-btn active" id="tabPending" role="tab" aria-selected="true">
+          Pending Requests <span class="count-pill" id="pendingCount">0</span>
+        </button>
+        <button type="button" class="tab-btn" id="tabApproved" role="tab" aria-selected="false">
+          Approved Directory <span class="count-pill" id="approvedCount">0</span>
+        </button>
+      </div>
+
+      <!-- Pending Tab -->
+      <div id="pendingPanel">
+        <div id="pendingContainer"></div>
+      </div>
+
+      <!-- Approved Tab -->
+      <div id="approvedPanel" style="display:none;">
+        <div class="search-row" style="margin-bottom:1rem;">
+          <div class="search-input-wrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="search" id="adminSearchInput" class="search-input" placeholder="Search approved teachers by name, subject, contact..." />
+          </div>
+        </div>
+        <div id="approvedContainer"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Edit / Approve Modal -->
+  <div id="editModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Edit Teacher</h2>
+        <button type="button" id="closeModalBtn" class="btn btn-secondary btn-sm">✕</button>
+      </div>
+      <form id="editForm">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label for="editName">Teacher / Academy Name</label>
+            <input type="text" id="editName" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="editSubject">Subject(s)</label>
+            <input type="text" id="editSubject" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="editMulti">Multi / Single</label>
+            <select id="editMulti" class="form-control">
+              <option value="Single">Single</option>
+              <option value="Multiple">Multiple</option>
+              <option value="Multi/repeat">Multi/repeat</option>
+              <option value="Misc">Misc</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editGrades">Grade(s)</label>
+            <input type="text" id="editGrades" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="editBoard">Board</label>
+            <input type="text" id="editBoard" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="editMode">Mode of Teaching</label>
+            <select id="editMode" class="form-control">
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
+              <option value="Hybrid">Hybrid</option>
+              <option value="N.A">N.A</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editContact">Contact Details</label>
+            <input type="text" id="editContact" class="form-control" />
+          </div>
+          <div class="form-group full">
+            <label for="editLocality">Locality for Offline</label>
+            <input type="text" id="editLocality" class="form-control" />
+          </div>
+          <div class="form-group full">
+            <label for="editComments">Comments</label>
+            <textarea id="editComments" rows="3" class="form-control"></textarea>
+          </div>
+        </div>
+
+        <div style="margin-top:1.25rem; display:flex; justify-content:flex-end; gap:0.6rem;">
+          <button type="button" id="cancelModalBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="saveModalBtn" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

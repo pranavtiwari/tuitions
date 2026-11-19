@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Yourself as a Teacher — Teacher Directory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="navbar-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-icon" aria-hidden="true">🎓</span>
+        <span>Teacher Directory</span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="index.html" class="nav-link">Browse Teachers</a>
+        <a href="submit.html" class="nav-link active">Add Yourself</a>
+        <a href="admin.html" class="nav-link">Moderate</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container container-narrow">
+    <div class="page-header">
+      <h1>Add Yourself as a Teacher</h1>
+      <p>Submit your details below. Once reviewed and approved by a moderator, your profile will appear in the public directory.</p>
+    </div>
+
+    <div id="setupNotice" class="alert alert-warning" style="display:none;">
+      <span>⚠️</span>
+      <div>
+        <strong>Backend not connected yet.</strong> Submissions require deploying the included Google Apps Script (<code>apps-script/Code.gs</code>) and setting <code>APPS_SCRIPT_URL</code> in <code>js/config.js</code>. See <code>README.md</code> for the 3-minute setup guide.
+      </div>
+    </div>
+
+    <div id="statusAlert" style="display:none;"></div>
+
+    <section class="card-panel">
+      <form id="teacherForm" novalidate>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label for="name">Teacher / Academy Name <span class="required">*</span></label>
+            <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Ms. Priya Sharma or Bright Minds Academy" required />
+          </div>
+
+          <div class="form-group">
+            <label for="subject">Subject(s) <span class="required">*</span></label>
+            <input type="text" id="subject" name="subject" class="form-control" list="subjectSuggestions" placeholder="e.g. Mathematics, English, Physics" required />
+            <datalist id="subjectSuggestions">
+              <option value="All Subjects"></option>
+              <option value="Art"></option>
+              <option value="Biology"></option>
+              <option value="Chemistry"></option>
+              <option value="Computers"></option>
+              <option value="Economics"></option>
+              <option value="English"></option>
+              <option value="French"></option>
+              <option value="Hindi"></option>
+              <option value="Kannada"></option>
+              <option value="Mathematics"></option>
+              <option value="Physics"></option>
+              <option value="Sanskrit"></option>
+              <option value="Science"></option>
+              <option value="Social Studies"></option>
+            </datalist>
+          </div>
+
+          <div class="form-group">
+            <label for="multiSingle">Single or Multiple Subjects?</label>
+            <select id="multiSingle" name="multiSingle" class="form-control">
+              <option value="Single">Single Subject</option>
+              <option value="Multiple">Multiple Subjects</option>
+              <option value="Misc">Misc / Skill Development</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label for="grades">Grade(s) Taught <span class="required">*</span></label>
+            <input type="text" id="grades" name="grades" class="form-control" placeholder="e.g. Grade 6 to 10, All Grades, Senior Grades" required />
+            <div class="quick-chips" aria-label="Quick grade presets">
+              <button type="button" class="quick-chip" data-grade="All Grades">All Grades</button>
+              <button type="button" class="quick-chip" data-grade="Early Learners">Early Learners</button>
+              <button type="button" class="quick-chip" data-grade="1 to 5">1 to 5</button>
+              <button type="button" class="quick-chip" data-grade="6 to 8">6 to 8</button>
+              <button type="button" class="quick-chip" data-grade="Grade 9 - 12">Grade 9 - 12</button>
+              <button type="button" class="quick-chip" data-grade="11 to 12">11 to 12</button>
+              <button type="button" class="quick-chip" data-grade="Senior Grades">Senior Grades</button>
+            </div>
+          </div>
+
+          <div class="form-group full">
+            <label>Board(s) <span class="required">*</span></label>
+            <div class="checkbox-group" id="boardCheckboxes">
+              <label class="chip-check"><input type="checkbox" value="ALL Boards" id="boardAll" /> All Boards</label>
+              <label class="chip-check"><input type="checkbox" value="CBSE" /> CBSE</label>
+              <label class="chip-check"><input type="checkbox" value="ICSE" /> ICSE</label>
+              <label class="chip-check"><input type="checkbox" value="IGCSE" /> IGCSE</label>
+              <label class="chip-check"><input type="checkbox" value="IB" /> IB</label>
+              <label class="chip-check"><input type="checkbox" value="State Board" /> State Board</label>
+            </div>
+            <input type="text" id="boardOther" class="form-control" placeholder="Optional: other board or exam (e.g. JEE, NEET, Olympiad)" style="margin-top:0.45rem;" />
+          </div>
+
+          <div class="form-group">
+            <label for="mode">Mode of Teaching <span class="required">*</span></label>
+            <select id="mode" name="mode" class="form-control" required>
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
+              <option value="Hybrid">Hybrid (Online &amp; Offline)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="contact">Contact Number <span class="required">*</span></label>
+            <input type="tel" id="contact" name="contact" class="form-control" placeholder="e.g. 9876543210" required />
+            <span class="hint">10-digit mobile number or international number with country code.</span>
+          </div>
+
+          <div class="form-group full" id="localityGroup">
+            <label for="locality">Locality for Offline Classes <span id="localityReq" class="required" style="display:none;">*</span></label>
+            <input type="text" id="locality" name="locality" class="form-control" placeholder="e.g. Whitefield, Varthur, Bellandur, Yelahanka" />
+            <span class="hint">Leave blank if you only teach online.</span>
+          </div>
+
+          <div class="form-group full">
+            <label for="comments">Additional Comments / Specializations</label>
+            <textarea id="comments" name="comments" rows="3" class="form-control" placeholder="e.g. Experience, Olympiad prep, learning support, batch sizes, timings..."></textarea>
+          </div>
+
+          <div class="form-group full">
+            <label for="submittedBy">Submitted / Recommended By (Optional)</label>
+            <input type="text" id="submittedBy" name="submittedBy" class="form-control" placeholder="Your name or apartment/community (only visible to moderators)" />
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem; display:flex; align-items:center; justify-content:flex-end; gap:0.75rem;">
+          <button type="reset" class="btn btn-secondary">Clear Form</button>
+          <button type="submit" id="submitBtn" class="btn btn-primary">Submit for Review</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script type="module" src="js/submit.js"></script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+import {
+  fetchTeachers,
+  normalizeMode,
+  normalizeBoard,
+  extractBoardTags,
+  formatPhoneLinks,
+  escapeHtml,
+} from './api.js';
+
+const searchInput = document.getElementById('searchInput');
+const subjectFilter = document.getElementById('subjectFilter');
+const boardFilter = document.getElementById('boardFilter');
+const modeFilter = document.getElementById('modeFilter');
+const localityFilter = document.getElementById('localityFilter');
+const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+const resultsCount = document.getElementById('resultsCount');
+const resultsContainer = document.getElementById('resultsContainer');
+const cardViewBtn = document.getElementById('cardViewBtn');
+const tableViewBtn = document.getElementById('tableViewBtn');
+const toastEl = document.getElementById('toast');
+
+let allTeachers = [];
+let currentView = 'cards';
+
+function showToast(message) {
+  toastEl.textContent = message;
+  toastEl.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+}
+
+function getModeBadgeClass(normalizedMode) {
+  if (normalizedMode === 'Online') return 'badge-online';
+  if (normalizedMode === 'Offline') return 'badge-offline';
+  if (normalizedMode === 'Hybrid') return 'badge-hybrid';
+  return 'badge-neutral';
+}
+
+function populateDropdowns(teachers) {
+  const subjects = [...new Set(teachers.map((t) => t.subject.trim()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b)
+  );
+  subjectFilter.innerHTML =
+    '<option value="">All Subjects</option>' +
+    subjects.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+
+  const localities = [...new Set(teachers.map((t) => t.locality.trim()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b)
+  );
+  localityFilter.innerHTML =
+    '<option value="">All Localities</option>' +
+    localities.map((l) => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+}
+
+function getFilteredTeachers() {
+  const q = searchInput.value.trim().toLowerCase();
+  const subj = subjectFilter.value;
+  const board = boardFilter.value;
+  const mode = modeFilter.value;
+  const locality = localityFilter.value;
+
+  return allTeachers.filter((t) => {
+    if (subj && t.subject.trim().toLowerCase() !== subj.toLowerCase()) {
+      return false;
+    }
+    if (board) {
+      const tags = extractBoardTags(t.board);
+      if (!tags.includes(board)) return false;
+    }
+    if (mode) {
+      const norm = normalizeMode(t.mode);
+      // If user filters Online or Offline, include Hybrid teachers too?
+      // Exact match on Hybrid, or include Hybrid when searching Online/Offline:
+      if (mode === 'Hybrid') {
+        if (norm !== 'Hybrid') return false;
+      } else if (norm !== mode && norm !== 'Hybrid') {
+        return false;
+      }
+    }
+    if (locality && t.locality.trim().toLowerCase() !== locality.toLowerCase()) {
+      return false;
+    }
+    if (q) {
+      const haystack = [
+        t.name,
+        t.subject,
+        t.grades,
+        t.board,
+        t.mode,
+        t.locality,
+        t.comments,
+        t.contact,
+      ]
+        .join(' ')
+        .toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function renderCards(teachers) {
+  if (!teachers.length) {
+    resultsContainer.innerHTML = `
+      <div class="state-box">
+        <strong>No teachers match your search.</strong>
+        <p style="margin:0.4rem 0 0;">Try clearing one of the filters or using a broader keyword.</p>
+      </div>`;
+    return;
+  }
+
+  resultsContainer.innerHTML = `
+    <div class="teacher-grid">
+      ${teachers
+        .map((t) => {
+          const mode = normalizeMode(t.mode);
+          const board = normalizeBoard(t.board);
+          const phone = formatPhoneLinks(t.contact);
+          return `
+            <article class="teacher-card">
+              <div class="card-top">
+                <div>
+                  <h2 class="teacher-name">${escapeHtml(t.name)}</h2>
+                  <span class="subject-tag">${escapeHtml(t.subject || 'General')}</span>
+                </div>
+                <span class="badge ${getModeBadgeClass(mode)}">${escapeHtml(mode)}</span>
+              </div>
+
+              <div class="meta-list">
+                <div class="meta-item">
+                  <span class="meta-label">Grade(s)</span>
+                  <span class="meta-value">${escapeHtml(t.grades || 'Not Specified')}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Board</span>
+                  <span class="meta-value">${escapeHtml(board)}</span>
+                </div>
+                ${
+                  t.locality
+                    ? `<div class="meta-item full">
+                         <span class="meta-label">Locality (Offline)</span>
+                         <span class="meta-value">${escapeHtml(t.locality)}</span>
+                       </div>`
+                    : ''
+                }
+              </div>
+
+              ${
+                t.comments
+                  ? `<div class="teacher-comments">${escapeHtml(t.comments)}</div>`
+                  : ''
+              }
+
+              <div class="card-actions">
+                <span class="phone-display">${escapeHtml(t.contact || 'No contact listed')}</span>
+                ${
+                  phone
+                    ? `<div class="contact-btns">
+                         <a class="btn btn-secondary btn-sm" href="${escapeHtml(phone.tel)}">Call</a>
+                         <a class="btn btn-primary btn-sm" href="${escapeHtml(phone.whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>
+                         <button type="button" class="btn btn-secondary btn-sm copy-btn" data-phone="${escapeHtml(phone.display)}">Copy</button>
+                       </div>`
+                    : ''
+                }
+              </div>
+            </article>
+          `;
+        })
+        .join('')}
+    </div>
+  `;
+}
+
+function renderTable(teachers) {
+  if (!teachers.length) {
+    resultsContainer.innerHTML = `
+      <div class="state-box">
+        <strong>No teachers match your search.</strong>
+        <p style="margin:0.4rem 0 0;">Try clearing one of the filters or using a broader keyword.</p>
+      </div>`;
+    return;
+  }
+
+  resultsContainer.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Teacher</th>
+            <th>Subject</th>
+            <th>Grade(s)</th>
+            <th>Board</th>
+            <th>Mode</th>
+            <th>Locality</th>
+            <th>Contact</th>
+            <th>Comments</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${teachers
+            .map((t) => {
+              const mode = normalizeMode(t.mode);
+              const board = normalizeBoard(t.board);
+              const phone = formatPhoneLinks(t.contact);
+              return `
+                <tr>
+                  <td><strong>${escapeHtml(t.name)}</strong></td>
+                  <td>${escapeHtml(t.subject)}</td>
+                  <td>${escapeHtml(t.grades || '—')}</td>
+                  <td>${escapeHtml(board)}</td>
+                  <td><span class="badge ${getModeBadgeClass(mode)}">${escapeHtml(mode)}</span></td>
+                  <td>${escapeHtml(t.locality || '—')}</td>
+                  <td style="white-space:nowrap;">
+                    ${
+                      phone
+                        ? `<a href="${escapeHtml(phone.tel)}" style="color:var(--primary);font-weight:600;">${escapeHtml(phone.display)}</a>`
+                        : escapeHtml(t.contact || '—')
+                    }
+                  </td>
+                  <td>${escapeHtml(t.comments || '—')}</td>
+                </tr>
+              `;
+            })
+            .join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function render() {
+  const filtered = getFilteredTeachers();
+  resultsCount.textContent = `Showing ${filtered.length} of ${allTeachers.length} teacher${allTeachers.length === 1 ? '' : 's'}`;
+  if (currentView === 'cards') {
+    renderCards(filtered);
+  } else {
+    renderTable(filtered);
+  }
+}
+
+resultsContainer.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  const phone = btn.dataset.phone;
+  try {
+    await navigator.clipboard.writeText(phone);
+    showToast(`Copied ${phone}`);
+  } catch {
+    showToast('Could not copy to clipboard');
+  }
+});
+
+[searchInput, subjectFilter, boardFilter, modeFilter, localityFilter].forEach((el) => {
+  el.addEventListener('input', render);
+  el.addEventListener('change', render);
+});
+
+resetFiltersBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  subjectFilter.value = '';
+  boardFilter.value = '';
+  modeFilter.value = '';
+  localityFilter.value = '';
+  render();
+});
+
+cardViewBtn.addEventListener('click', () => {
+  currentView = 'cards';
+  cardViewBtn.classList.add('active');
+  tableViewBtn.classList.remove('active');
+  render();
+});
+
+tableViewBtn.addEventListener('click', () => {
+  currentView = 'table';
+  tableViewBtn.classList.add('active');
+  cardViewBtn.classList.remove('active');
+  render();
+});
+
+async function init() {
+  try {
+    const { teachers } = await fetchTeachers();
+    allTeachers = teachers;
+    populateDropdowns(allTeachers);
+    render();
+  } catch (err) {
+    resultsCount.textContent = 'Unable to load directory';
+    resultsContainer.innerHTML = `
+      <div class="state-box">
+        <strong>Could not load teachers from Google Sheets.</strong>
+        <p style="margin:0.5rem 0 0;">${escapeHtml(err.message)}</p>
+      </div>`;
+  }
+}
+
+init();

@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Add Yourself as a Teacher — Teacher Directory</title>
+  <title>Add a Teacher — Teacher Directory</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23134e4a'/%3E%3Cpath d='M16 9 6 14l10 5 10-5-10-5Zm-6 7.5V21c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.5l-6 3-6-3Z' fill='%23fff'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,27 +14,47 @@
   <header class="navbar">
     <div class="navbar-inner">
       <a href="index.html" class="brand">
-        <span class="brand-icon" aria-hidden="true">🎓</span>
-        <span>Teacher Directory</span>
+        <span class="brand-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span>Teacher Directory</span>
+          <span class="brand-sub">Community Curated</span>
+        </span>
       </a>
       <nav class="nav-links" aria-label="Main navigation">
         <a href="index.html" class="nav-link">Browse Teachers</a>
-        <a href="submit.html" class="nav-link active">Add Yourself</a>
+        <a href="submit.html" class="nav-link active" aria-current="page">Add a Teacher</a>
         <a href="admin.html" class="nav-link">Moderate</a>
       </nav>
     </div>
   </header>
 
-  <main class="container container-narrow">
-    <div class="page-header">
-      <h1>Add Yourself as a Teacher</h1>
-      <p>Submit your details below. Once reviewed and approved by a moderator, your profile will appear in the public directory.</p>
+  <section class="page-hero">
+    <div class="page-hero-inner narrow">
+      <div class="page-header">
+        <div class="eyebrow">
+          <span class="eyebrow-dot" aria-hidden="true"></span>
+          Moderator Reviewed
+        </div>
+        <h1>Add a Teacher to the Directory</h1>
+        <p>Submit yourself or recommend a tutor below. Once reviewed and approved by a moderator, the profile will appear in the public directory.</p>
+      </div>
     </div>
+  </section>
 
+  <main class="container container-narrow">
     <div id="setupNotice" class="alert alert-warning" style="display:none;">
-      <span>⚠️</span>
+      <svg class="alert-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
       <div>
-        <strong>Backend not connected yet.</strong> Submissions require deploying the included Google Apps Script (<code>apps-script/Code.gs</code>) and setting <code>APPS_SCRIPT_URL</code> in <code>js/config.js</code>. See <code>README.md</code> for the 3-minute setup guide.
+        <strong>Backend not connected yet.</strong> Submissions require deploying the included Google Apps Script (<code>apps-script/Code.gs</code>) and setting <code>APPS_SCRIPT_URL</code> in <code>js/config.js</code>.
       </div>
     </div>
 
@@ -41,6 +62,7 @@
 
     <section class="card-panel">
       <form id="teacherForm" novalidate>
+        <h2 class="form-section-title">Basic Details</h2>
         <div class="form-grid">
           <div class="form-group full">
             <label for="name">Teacher / Academy Name <span class="required">*</span></label>
@@ -77,7 +99,10 @@
               <option value="Misc">Misc / Skill Development</option>
             </select>
           </div>
+        </div>
 
+        <h2 class="form-section-title spaced">Teaching Scope</h2>
+        <div class="form-grid">
           <div class="form-group full">
             <label for="grades">Grade(s) Taught <span class="required">*</span></label>
             <input type="text" id="grades" name="grades" class="form-control" placeholder="e.g. Grade 6 to 10, All Grades, Senior Grades" required />
@@ -104,7 +129,10 @@
             </div>
             <input type="text" id="boardOther" class="form-control" placeholder="Optional: other board or exam (e.g. JEE, NEET, Olympiad)" style="margin-top:0.45rem;" />
           </div>
+        </div>
 
+        <h2 class="form-section-title spaced">Contact &amp; Additional Notes</h2>
+        <div class="form-grid">
           <div class="form-group">
             <label for="mode">Mode of Teaching <span class="required">*</span></label>
             <select id="mode" name="mode" class="form-control" required>
@@ -137,13 +165,24 @@
           </div>
         </div>
 
-        <div style="margin-top:1.5rem; display:flex; align-items:center; justify-content:flex-end; gap:0.75rem;">
+        <div class="form-actions">
           <button type="reset" class="btn btn-secondary">Clear Form</button>
           <button type="submit" id="submitBtn" class="btn btn-primary">Submit for Review</button>
         </div>
       </form>
     </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Teacher Directory &middot; Community-maintained recommendations</span>
+      <div class="footer-links">
+        <a href="index.html">Browse</a>
+        <a href="submit.html">Recommend a Teacher</a>
+        <a href="admin.html">Moderator</a>
+      </div>
+    </div>
+  </footer>
 
   <script type="module" src="js/submit.js"></script>
 </body>

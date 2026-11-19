@@ -18,6 +18,37 @@ const resultsContainer = document.getElementById('resultsContainer');
 const cardViewBtn = document.getElementById('cardViewBtn');
 const tableViewBtn = document.getElementById('tableViewBtn');
 const toastEl = document.getElementById('toast');
+const statTeachers = document.getElementById('statTeachers');
+const statSubjects = document.getElementById('statSubjects');
+const statOnline = document.getElementById('statOnline');
+
+const ICONS = {
+  phone: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`,
+  message: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`,
+  copy: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`,
+};
+
+function getInitials(name) {
+  const cleaned = String(name || '')
+    .replace(/^(ms|mrs|mr|dr|prof|miss|sir|madam)\.?\s+/i, '')
+    .trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function updateStats(teachers) {
+  if (!statTeachers) return;
+  const uniqueSubjects = new Set(teachers.map((t) => t.subject.trim().toLowerCase()).filter(Boolean));
+  const onlineOrHybrid = teachers.filter((t) => {
+    const m = normalizeMode(t.mode);
+    return m === 'Online' || m === 'Hybrid';
+  }).length;
+  statTeachers.textContent = String(teachers.length);
+  statSubjects.textContent = String(uniqueSubjects.size);
+  statOnline.textContent = String(onlineOrHybrid);
+}
 
 let allTeachers = [];
 let currentView = 'cards';
@@ -119,9 +150,12 @@ function renderCards(teachers) {
           return `
             <article class="teacher-card">
               <div class="card-top">
-                <div>
-                  <h2 class="teacher-name">${escapeHtml(t.name)}</h2>
-                  <span class="subject-tag">${escapeHtml(t.subject || 'General')}</span>
+                <div class="card-identity">
+                  <div class="teacher-avatar" aria-hidden="true">${escapeHtml(getInitials(t.name))}</div>
+                  <div class="teacher-heading">
+                    <h2 class="teacher-name">${escapeHtml(t.name)}</h2>
+                    <span class="subject-tag">${escapeHtml(t.subject || 'General')}</span>
+                  </div>
                 </div>
                 <span class="badge ${getModeBadgeClass(mode)}">${escapeHtml(mode)}</span>
               </div>
@@ -152,13 +186,13 @@ function renderCards(teachers) {
               }
 
               <div class="card-actions">
-                <span class="phone-display">${escapeHtml(t.contact || 'No contact listed')}</span>
+                <span class="phone-display">${ICONS.phone}${escapeHtml(t.contact || 'No contact listed')}</span>
                 ${
                   phone
                     ? `<div class="contact-btns">
                          <a class="btn btn-secondary btn-sm" href="${escapeHtml(phone.tel)}">Call</a>
-                         <a class="btn btn-primary btn-sm" href="${escapeHtml(phone.whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>
-                         <button type="button" class="btn btn-secondary btn-sm copy-btn" data-phone="${escapeHtml(phone.display)}">Copy</button>
+                         <a class="btn btn-primary btn-sm" href="${escapeHtml(phone.whatsapp)}" target="_blank" rel="noopener">${ICONS.message}WhatsApp</a>
+                         <button type="button" class="btn btn-secondary btn-sm btn-icon copy-btn" data-phone="${escapeHtml(phone.display)}" title="Copy phone number" aria-label="Copy phone number">${ICONS.copy}</button>
                        </div>`
                     : ''
                 }
@@ -213,7 +247,7 @@ function renderTable(teachers) {
                   <td style="white-space:nowrap;">
                     ${
                       phone
-                        ? `<a href="${escapeHtml(phone.tel)}" style="color:var(--primary);font-weight:600;">${escapeHtml(phone.display)}</a>`
+                        ? `<a href="${escapeHtml(phone.tel)}" class="table-phone-link">${escapeHtml(phone.display)}</a>`
                         : escapeHtml(t.contact || '—')
                     }
                   </td>
@@ -282,6 +316,7 @@ async function init() {
   try {
     const { teachers } = await fetchTeachers();
     allTeachers = teachers;
+    updateStats(allTeachers);
     populateDropdowns(allTeachers);
     render();
   } catch (err) {

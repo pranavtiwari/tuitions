@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Recommended Teachers — Browse & Search</title>
+  <title>Recommended Teachers — Browse &amp; Search</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23134e4a'/%3E%3Cpath d='M16 9 6 14l10 5 10-5-10-5Zm-6 7.5V21c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.5l-6 3-6-3Z' fill='%23fff'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,27 +14,59 @@
   <header class="navbar">
     <div class="navbar-inner">
       <a href="index.html" class="brand">
-        <span class="brand-icon" aria-hidden="true">🎓</span>
-        <span>Teacher Directory</span>
+        <span class="brand-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span>Teacher Directory</span>
+          <span class="brand-sub">Community Curated</span>
+        </span>
       </a>
       <nav class="nav-links" aria-label="Main navigation">
-        <a href="index.html" class="nav-link active">Browse Teachers</a>
-        <a href="submit.html" class="nav-link">Add Yourself</a>
+        <a href="index.html" class="nav-link active" aria-current="page">Browse Teachers</a>
+        <a href="submit.html" class="nav-link">Add a Teacher</a>
         <a href="admin.html" class="nav-link">Moderate</a>
       </nav>
     </div>
   </header>
 
-  <main class="container">
-    <div class="page-header">
-      <h1>Find a Recommended Teacher</h1>
-      <p>Search and filter our community-curated list of tutors by subject, grade, board, teaching mode, or locality.</p>
+  <section class="page-hero">
+    <div class="page-hero-inner">
+      <div class="hero-row">
+        <div class="page-header">
+          <div class="eyebrow">
+            <span class="eyebrow-dot" aria-hidden="true"></span>
+            Parent &amp; Community Recommended
+          </div>
+          <h1>Find a Trusted Tutor</h1>
+          <p>Search and filter our curated directory of recommended teachers by subject, grade, board, teaching mode, or offline locality.</p>
+        </div>
+        <div class="stats-strip" id="statsStrip" aria-label="Directory summary">
+          <div class="stat-card">
+            <div class="stat-value" id="statTeachers">—</div>
+            <div class="stat-label">Teachers</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statSubjects">—</div>
+            <div class="stat-label">Subjects</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statOnline">—</div>
+            <div class="stat-label">Online / Hybrid</div>
+          </div>
+        </div>
+      </div>
     </div>
+  </section>
 
+  <main class="container">
     <section class="filter-panel" aria-label="Search and filters">
       <div class="search-row">
         <div class="search-input-wrap">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
@@ -45,7 +78,7 @@
             autocomplete="off"
           />
         </div>
-        <button type="button" id="resetFiltersBtn" class="btn btn-secondary">Reset</button>
+        <button type="button" id="resetFiltersBtn" class="btn btn-secondary">Reset Filters</button>
       </div>
 
       <div class="filter-grid">
@@ -90,18 +123,47 @@
     <div class="results-toolbar">
       <div id="resultsCount" class="results-count">Loading teachers...</div>
       <div class="view-toggle" role="group" aria-label="View layout">
-        <button type="button" id="cardViewBtn" class="active">Cards</button>
-        <button type="button" id="tableViewBtn">Table</button>
+        <button type="button" id="cardViewBtn" class="active">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+          </svg>
+          Cards
+        </button>
+        <button type="button" id="tableViewBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          Table
+        </button>
       </div>
     </div>
 
     <div id="resultsContainer">
       <div class="state-box">
         <div class="spinner"></div>
-        <div>Loading teacher directory from Google Sheets...</div>
+        <div>Loading teacher directory...</div>
       </div>
     </div>
   </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Teacher Directory &middot; Community-maintained recommendations</span>
+      <div class="footer-links">
+        <a href="index.html">Browse</a>
+        <a href="submit.html">Recommend a Teacher</a>
+        <a href="admin.html">Moderator</a>
+      </div>
+    </div>
+  </footer>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 

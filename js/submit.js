@@ -48,9 +48,13 @@ function syncLocalityRequirement() {
 modeSelect.addEventListener('change', syncLocalityRequirement);
 syncLocalityRequirement();
 
+const ERROR_ICON = `<svg class="alert-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+const SUCCESS_ICON = `<svg class="alert-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+
 function showAlert(type, html) {
+  const icon = type === 'success' ? SUCCESS_ICON : ERROR_ICON;
   statusAlert.className = `alert alert-${type}`;
-  statusAlert.innerHTML = html;
+  statusAlert.innerHTML = `${icon}<div>${html}</div>`;
   statusAlert.style.display = 'flex';
   statusAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -78,18 +82,18 @@ form.addEventListener('submit', async (e) => {
   const submittedBy = form.submittedBy.value.trim();
 
   // Basic validation
-  if (!name) return showAlert('danger', '<span>❌</span><div>Please enter the teacher or academy name.</div>');
-  if (!subject) return showAlert('danger', '<span>❌</span><div>Please enter at least one subject.</div>');
-  if (!grades) return showAlert('danger', '<span>❌</span><div>Please specify the grade(s) taught.</div>');
-  if (!board) return showAlert('danger', '<span>❌</span><div>Please select at least one board (or enter one in the text field).</div>');
+  if (!name) return showAlert('danger', 'Please enter the teacher or academy name.');
+  if (!subject) return showAlert('danger', 'Please enter at least one subject.');
+  if (!grades) return showAlert('danger', 'Please specify the grade(s) taught.');
+  if (!board) return showAlert('danger', 'Please select at least one board (or enter one in the text field).');
 
   const digits = contact.replace(/\D/g, '');
   if (digits.length < 7) {
-    return showAlert('danger', '<span>❌</span><div>Please enter a valid contact phone number (at least 7 digits).</div>');
+    return showAlert('danger', 'Please enter a valid contact phone number (at least 7 digits).');
   }
   if ((mode === 'Offline' || mode === 'Hybrid') && !locality) {
     localityInput.focus();
-    return showAlert('danger', '<span>❌</span><div>Please enter a locality for offline/hybrid classes.</div>');
+    return showAlert('danger', 'Please enter a locality for offline/hybrid classes.');
   }
 
   submitBtn.disabled = true;
@@ -113,10 +117,10 @@ form.addEventListener('submit', async (e) => {
     syncLocalityRequirement();
     showAlert(
       'success',
-      `<span>✅</span><div><strong>Thank you!</strong> Your submission for <strong>${escapeHtml(name)}</strong> has been received and is awaiting moderator approval.</div>`
+      `<strong>Thank you!</strong> Your submission for <strong>${escapeHtml(name)}</strong> has been received and is awaiting moderator approval.`
     );
   } catch (err) {
-    showAlert('danger', `<span>❌</span><div><strong>Submission failed:</strong> ${escapeHtml(err.message)}</div>`);
+    showAlert('danger', `<strong>Submission failed:</strong> ${escapeHtml(err.message)}`);
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit for Review';

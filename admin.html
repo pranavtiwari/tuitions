@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Moderate Requests — Teacher Directory</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23134e4a'/%3E%3Cpath d='M16 9 6 14l10 5 10-5-10-5Zm-6 7.5V21c0 1.4 2.7 3 6 3s6-1.6 6-3v-4.5l-6 3-6-3Z' fill='%23fff'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,30 +14,48 @@
   <header class="navbar">
     <div class="navbar-inner">
       <a href="index.html" class="brand">
-        <span class="brand-icon" aria-hidden="true">🎓</span>
-        <span>Teacher Directory</span>
+        <span class="brand-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span>Teacher Directory</span>
+          <span class="brand-sub">Community Curated</span>
+        </span>
       </a>
       <nav class="nav-links" aria-label="Main navigation">
         <a href="index.html" class="nav-link">Browse Teachers</a>
-        <a href="submit.html" class="nav-link">Add Yourself</a>
-        <a href="admin.html" class="nav-link active">Moderate</a>
+        <a href="submit.html" class="nav-link">Add a Teacher</a>
+        <a href="admin.html" class="nav-link active" aria-current="page">Moderate</a>
       </nav>
     </div>
   </header>
 
   <main class="container">
     <div id="setupNotice" class="alert alert-warning" style="display:none;">
-      <span>⚠️</span>
+      <svg class="alert-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
       <div>
-        <strong>Backend not connected yet.</strong> Moderation requires deploying <code>apps-script/Code.gs</code> as a Web App and setting <code>APPS_SCRIPT_URL</code> in <code>js/config.js</code>. See <code>README.md</code> for setup steps.
+        <strong>Backend not connected yet.</strong> Moderation requires deploying <code>apps-script/Code.gs</code> as a Web App and setting <code>APPS_SCRIPT_URL</code> in <code>js/config.js</code>.
       </div>
     </div>
 
     <!-- Login View -->
-    <section id="loginSection" class="container-narrow" style="margin: 2rem auto;">
+    <section id="loginSection" class="login-shell">
       <div class="card-panel">
+        <div class="login-badge" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
         <div class="page-header" style="margin-bottom:1.25rem;">
-          <h1 style="font-size:1.55rem;">Moderator Sign In</h1>
+          <h1 style="font-size:1.5rem;">Moderator Sign In</h1>
           <p>Enter your admin passcode to review pending teacher requests and manage the directory.</p>
         </div>
 
@@ -47,7 +66,7 @@
             <label for="passcodeInput">Admin Passcode</label>
             <input type="password" id="passcodeInput" class="form-control" placeholder="Enter moderator passcode" required autocomplete="current-password" />
           </div>
-          <div style="margin-top:1.15rem;">
+          <div style="margin-top:1.2rem;">
             <button type="submit" id="loginBtn" class="btn btn-primary" style="width:100%;">Unlock Moderator Dashboard</button>
           </div>
         </form>
@@ -56,13 +75,19 @@
 
     <!-- Dashboard View -->
     <section id="dashboardSection" style="display:none;">
-      <div class="results-toolbar" style="margin-bottom:1.25rem;">
+      <div class="results-toolbar" style="margin-bottom:1.4rem;">
         <div class="page-header" style="margin-bottom:0;">
           <h1>Moderation Dashboard</h1>
           <p>Approve, edit, or reject teacher submissions and keep the directory up to date.</p>
         </div>
         <div style="display:flex; gap:0.5rem;">
-          <button type="button" id="refreshBtn" class="btn btn-secondary">↻ Refresh</button>
+          <button type="button" id="refreshBtn" class="btn btn-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Refresh
+          </button>
           <button type="button" id="logoutBtn" class="btn btn-danger">Sign Out</button>
         </div>
       </div>
@@ -85,7 +110,7 @@
       <div id="approvedPanel" style="display:none;">
         <div class="search-row" style="margin-bottom:1rem;">
           <div class="search-input-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
@@ -102,7 +127,12 @@
     <div class="modal">
       <div class="modal-header">
         <h2 id="modalTitle">Edit Teacher</h2>
-        <button type="button" id="closeModalBtn" class="btn btn-secondary btn-sm">✕</button>
+        <button type="button" id="closeModalBtn" class="btn btn-ghost btn-sm btn-icon" aria-label="Close modal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
       <form id="editForm">
         <div class="form-grid">
@@ -154,13 +184,24 @@
           </div>
         </div>
 
-        <div style="margin-top:1.25rem; display:flex; justify-content:flex-end; gap:0.6rem;">
+        <div class="form-actions" style="margin-top:1.35rem; padding-top:1rem;">
           <button type="button" id="cancelModalBtn" class="btn btn-secondary">Cancel</button>
           <button type="submit" id="saveModalBtn" class="btn btn-primary">Save Changes</button>
         </div>
       </form>
     </div>
   </div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Teacher Directory &middot; Community-maintained recommendations</span>
+      <div class="footer-links">
+        <a href="index.html">Browse</a>
+        <a href="submit.html">Recommend a Teacher</a>
+        <a href="admin.html">Moderator</a>
+      </div>
+    </div>
+  </footer>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 

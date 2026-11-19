@@ -73,6 +73,7 @@ form.addEventListener('submit', async (e) => {
   const name = form.name.value.trim();
   const subject = form.subject.value.trim();
   const multiSingle = form.multiSingle.value;
+  const experience = form.experience.value.trim();
   const grades = form.grades.value.trim();
   const board = getSelectedBoardString();
   const mode = form.mode.value;
@@ -84,6 +85,13 @@ form.addEventListener('submit', async (e) => {
   // Basic validation
   if (!name) return showAlert('danger', 'Please enter the teacher or academy name.');
   if (!subject) return showAlert('danger', 'Please enter at least one subject.');
+  if (experience) {
+    const expNum = Number(experience);
+    if (Number.isNaN(expNum) || expNum < 0 || expNum > 80) {
+      form.experience.focus();
+      return showAlert('danger', 'Please enter experience as a valid number of years (0 to 80).');
+    }
+  }
   if (!grades) return showAlert('danger', 'Please specify the grade(s) taught.');
   if (!board) return showAlert('danger', 'Please select at least one board (or enter one in the text field).');
 
@@ -104,6 +112,7 @@ form.addEventListener('submit', async (e) => {
       name,
       subject,
       multiSingle,
+      experience,
       grades,
       board,
       mode,

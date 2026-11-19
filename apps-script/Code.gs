@@ -27,6 +27,7 @@ const PENDING_HEADERS = [
   'Locality for Offline',
   'Comments',
   'Submitted By',
+  'Experience (Years)',
 ];
 
 function jsonResponse(obj) {
@@ -64,6 +65,12 @@ function getOrCreatePendingSheet() {
     sheet = ss.insertSheet(PENDING_SHEET_NAME);
     sheet.getRange(1, 1, 1, PENDING_HEADERS.length).setValues([PENDING_HEADERS]);
     sheet.setFrozenRows(1);
+  } else {
+    const existingCols = sheet.getLastColumn();
+    if (existingCols < PENDING_HEADERS.length) {
+      const missing = PENDING_HEADERS.slice(existingCols);
+      sheet.getRange(1, existingCols + 1, 1, missing.length).setValues([missing]);
+    }
   }
   return sheet;
 }
@@ -106,8 +113,17 @@ function getMainSheetLayout(sheet) {
       locality: findCol('locality', 9),
       comments: findCol('comment', 10),
       status: findCol('comment', 10) + 1,
+      experience: findCol('experience', -1),
     },
   };
+}
+
+function ensureExperienceColumn(sheet, layout) {
+  if (layout.cols.experience >= 0) return layout.cols.experience;
+  const colIdx = Math.max(layout.cols.status + 1, sheet.getLastColumn());
+  sheet.getRange(layout.headerRow, colIdx + 1).setValue('Experience (Years)');
+  layout.cols.experience = colIdx;
+  return colIdx;
 }
 
 function verifyPasscode(passcode) {
@@ -154,6 +170,7 @@ function getAllTeachers() {
       contact,
       locality: (r[c.locality] || '').trim(),
       comments: (r[c.comments] || '').trim(),
+      experience: c.experience >= 0 ? (r[c.experience] || '').trim() : '',
       verified: (r[c.status] || '').trim().toUpperCase() === 'OK',
     });
   }
@@ -183,6 +200,7 @@ function getPendingList() {
       locality: r[9],
       comments: r[10],
       submittedBy: r[11],
+      experience: r[12] || '',
     });
   }
   return pending;
@@ -209,6 +227,7 @@ function handleSubmit(data) {
     safeCell(data.locality || ''),
     safeCell(data.comments || ''),
     safeCell(data.submittedBy || ''),
+    safeCell(data.experience || ''),
   ]);
 
   return { ok: true, id };
@@ -242,11 +261,16 @@ function handleApprove(id, editedData) {
     contact: rawRow[8],
     locality: rawRow[9],
     comments: rawRow[10],
+    experience: rawRow[12] || '',
   };
 
   const mainSheet = getMainSheet();
   const layout = getMainSheetLayout(mainSheet);
   const c = layout.cols;
+
+  if (d.experience && String(d.experience).trim() !== '' && c.experience < 0) {
+    ensureExperienceColumn(mainSheet, layout);
+  }
 
   // Compute next Sl. number
   let maxSl = 0;
@@ -261,7 +285,7 @@ function handleApprove(id, editedData) {
     }
   }
 
-  const rowWidth = Math.max(12, c.status + 1);
+  const rowWidth = Math.max(12, c.status + 1, c.experience >= 0 ? c.experience + 1 : 0);
   const newRow = new Array(rowWidth).fill('');
   newRow[c.sl] = maxSl + 1;
   newRow[c.subject] = safeCell(d.subject);
@@ -274,6 +298,9 @@ function handleApprove(id, editedData) {
   newRow[c.locality] = safeCell(d.locality);
   newRow[c.comments] = safeCell(d.comments);
   newRow[c.status] = 'OK';
+  if (c.experience >= 0) {
+    newRow[c.experience] = safeCell(d.experience || '');
+  }
 
   mainSheet.getRange(lastRow + 1, 1, 1, rowWidth).setValues([newRow]);
   pendingSheet.deleteRow(pendingRow);
@@ -300,7 +327,11 @@ function handleUpdateTeacher(rowIndex, d) {
   }
 
   const c = layout.cols;
-  const rowWidth = Math.max(12, c.status + 1);
+  if (d.experience && String(d.experience).trim() !== '' && c.experience < 0) {
+    ensureExperienceColumn(mainSheet, layout);
+  }
+
+  const rowWidth = Math.max(12, c.status + 1, c.experience >= 0 ? c.experience + 1 : 0);
   const existing = mainSheet.getRange(idx, 1, 1, rowWidth).getValues()[0];
 
   existing[c.subject] = safeCell(d.subject);
@@ -312,6 +343,9 @@ function handleUpdateTeacher(rowIndex, d) {
   existing[c.contact] = safeCell(d.contact);
   existing[c.locality] = safeCell(d.locality);
   existing[c.comments] = safeCell(d.comments);
+  if (c.experience >= 0) {
+    existing[c.experience] = safeCell(d.experience || '');
+  }
 
   mainSheet.getRange(idx, 1, 1, rowWidth).setValues([existing]);
   return { ok: true };

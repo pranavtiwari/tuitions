@@ -3,6 +3,7 @@ import {
   normalizeMode,
   normalizeBoard,
   extractBoardTags,
+  formatExperience,
   formatPhoneLinks,
   escapeHtml,
 } from './api.js';
@@ -136,6 +137,7 @@ function renderCards(teachers) {
         .map((t) => {
           const mode = normalizeMode(t.mode);
           const board = normalizeBoard(t.board);
+          const experience = formatExperience(t.experience);
           const phone = formatPhoneLinks(t.contact);
           return `
             <article class="teacher-card">
@@ -157,8 +159,16 @@ function renderCards(teachers) {
                   <span class="meta-value">${escapeHtml(board)}</span>
                 </div>
                 ${
+                  experience
+                    ? `<div class="meta-item">
+                         <span class="meta-label">Experience</span>
+                         <span class="meta-value">${escapeHtml(experience)}</span>
+                       </div>`
+                    : ''
+                }
+                ${
                   t.locality
-                    ? `<div class="meta-item full">
+                    ? `<div class="meta-item${experience ? '' : ' full'}">
                          <span class="meta-label">Locality (Offline)</span>
                          <span class="meta-value">${escapeHtml(t.locality)}</span>
                        </div>`
@@ -212,6 +222,7 @@ function renderTable(teachers) {
             <th>Grade(s)</th>
             <th>Board</th>
             <th>Mode</th>
+            <th>Experience</th>
             <th>Locality</th>
             <th>Contact</th>
             <th>Comments</th>
@@ -222,6 +233,7 @@ function renderTable(teachers) {
             .map((t) => {
               const mode = normalizeMode(t.mode);
               const board = normalizeBoard(t.board);
+              const experience = formatExperience(t.experience);
               const phone = formatPhoneLinks(t.contact);
               return `
                 <tr>
@@ -230,6 +242,7 @@ function renderTable(teachers) {
                   <td>${escapeHtml(t.grades || '—')}</td>
                   <td>${escapeHtml(board)}</td>
                   <td><span class="badge ${getModeBadgeClass(mode)}">${escapeHtml(mode)}</span></td>
+                  <td style="white-space:nowrap;">${escapeHtml(experience || '—')}</td>
                   <td>${escapeHtml(t.locality || '—')}</td>
                   <td style="white-space:nowrap;">
                     ${

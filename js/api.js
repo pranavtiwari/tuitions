@@ -50,6 +50,19 @@ export function extractBoardTags(raw) {
 }
 
 /**
+ * Format optional experience (in years) for display (e.g. "5" -> "5 yrs", "1" -> "1 yr").
+ */
+export function formatExperience(raw) {
+  const val = String(raw ?? '').trim();
+  if (!val || /^n\.?a\.?$/i.test(val)) return '';
+  const num = Number(val);
+  if (!Number.isNaN(num) && Number.isFinite(num)) {
+    return `${num} ${num === 1 ? 'yr' : 'yrs'}`;
+  }
+  return val;
+}
+
+/**
  * Clean a phone string into digits for tel: and WhatsApp links.
  */
 export function formatPhoneLinks(rawContact) {
@@ -162,6 +175,7 @@ async function fetchTeachersFromCSV() {
   const cContact = col('contact', 8);
   const cLocality = col('locality', 9);
   const cComments = col('comment', 10);
+  const cExperience = headers.findIndex((h) => h.includes('experience'));
 
   const teachers = [];
   for (let i = headerIdx + 1; i < rows.length; i++) {
@@ -183,6 +197,7 @@ async function fetchTeachersFromCSV() {
       contact,
       locality: (r[cLocality] || '').trim(),
       comments: (r[cComments] || '').trim(),
+      experience: cExperience >= 0 ? (r[cExperience] || '').trim() : '',
       verified: (r[cComments + 1] || '').trim().toUpperCase() === 'OK',
     });
   }

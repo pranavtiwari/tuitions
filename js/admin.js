@@ -8,6 +8,7 @@ import {
   updateTeacher,
   deleteTeacher,
   normalizeMode,
+  formatExperience,
   escapeHtml,
 } from './api.js';
 
@@ -86,6 +87,7 @@ function openModal(context) {
   const normMode = normalizeMode(item.mode);
   document.getElementById('editMode').value = ['Online', 'Offline', 'Hybrid'].includes(normMode) ? normMode : 'N.A';
   document.getElementById('editContact').value = item.contact || '';
+  document.getElementById('editExperience').value = item.experience || '';
   document.getElementById('editLocality').value = item.locality || '';
   document.getElementById('editComments').value = item.comments || '';
 
@@ -158,8 +160,16 @@ function renderPending() {
                   <span class="meta-value">${escapeHtml(item.contact || '—')}</span>
                 </div>
                 ${
+                  item.experience
+                    ? `<div class="meta-item">
+                         <span class="meta-label">Experience</span>
+                         <span class="meta-value">${escapeHtml(formatExperience(item.experience))}</span>
+                       </div>`
+                    : ''
+                }
+                ${
                   item.locality
-                    ? `<div class="meta-item full">
+                    ? `<div class="meta-item${item.experience ? '' : ' full'}">
                          <span class="meta-label">Locality</span>
                          <span class="meta-value">${escapeHtml(item.locality)}</span>
                        </div>`
@@ -225,6 +235,7 @@ function renderApproved() {
             <th>Grade(s)</th>
             <th>Board</th>
             <th>Mode</th>
+            <th>Experience</th>
             <th>Contact</th>
             <th>Actions</th>
           </tr>
@@ -243,6 +254,7 @@ function renderApproved() {
                   <td>${escapeHtml(t.grades || '—')}</td>
                   <td>${escapeHtml(t.board || '—')}</td>
                   <td>${escapeHtml(normalizeMode(t.mode))}</td>
+                  <td style="white-space:nowrap;">${escapeHtml(formatExperience(t.experience) || '—')}</td>
                   <td style="white-space:nowrap;">${escapeHtml(t.contact || '—')}</td>
                   <td style="white-space:nowrap;">
                     <button type="button" class="btn btn-secondary btn-sm edit-approved-btn" data-row="${t.rowIndex}">Edit</button>
@@ -406,6 +418,7 @@ editForm.addEventListener('submit', async (e) => {
     board: document.getElementById('editBoard').value.trim(),
     mode: document.getElementById('editMode').value,
     contact: document.getElementById('editContact').value.trim(),
+    experience: document.getElementById('editExperience').value.trim(),
     locality: document.getElementById('editLocality').value.trim(),
     comments: document.getElementById('editComments').value.trim(),
   };

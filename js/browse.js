@@ -28,16 +28,6 @@ const ICONS = {
   copy: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`,
 };
 
-function getInitials(name) {
-  const cleaned = String(name || '')
-    .replace(/^(ms|mrs|mr|dr|prof|miss|sir|madam)\.?\s+/i, '')
-    .trim();
-  const parts = cleaned.split(/\s+/).filter(Boolean);
-  if (!parts.length) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 function updateStats(teachers) {
   if (!statTeachers) return;
   const uniqueSubjects = new Set(teachers.map((t) => t.subject.trim().toLowerCase()).filter(Boolean));
@@ -150,12 +140,9 @@ function renderCards(teachers) {
           return `
             <article class="teacher-card">
               <div class="card-top">
-                <div class="card-identity">
-                  <div class="teacher-avatar" aria-hidden="true">${escapeHtml(getInitials(t.name))}</div>
-                  <div class="teacher-heading">
-                    <h2 class="teacher-name">${escapeHtml(t.name)}</h2>
-                    <span class="subject-tag">${escapeHtml(t.subject || 'General')}</span>
-                  </div>
+                <div class="teacher-heading">
+                  <h2 class="teacher-name">${escapeHtml(t.name)}</h2>
+                  <span class="subject-tag">${escapeHtml(t.subject || 'General')}</span>
                 </div>
                 <span class="badge ${getModeBadgeClass(mode)}">${escapeHtml(mode)}</span>
               </div>

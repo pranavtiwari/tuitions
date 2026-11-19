@@ -18,7 +18,7 @@ export const CONFIG = {
 
   // Paste your deployed Google Apps Script Web App URL here:
   // Example: 'https://script.google.com/macros/s/AKfycb.../exec'
-  APPS_SCRIPT_URL: '',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxA7tJqMixSNXRw-f9294fnuF1CcvCk9X5-Bvvw1cH9bmgebPDWi76UEUdjJOJZDry8/exec',
 
   // Default country code for WhatsApp links when a 10-digit number is stored
   DEFAULT_COUNTRY_CODE: '91',

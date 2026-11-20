@@ -316,6 +316,15 @@ function renderReferences() {
 
         <div class="teacher-comments">${escapeHtml(r.review)}</div>
 
+        ${
+          r.subjectGrade || r.duration
+            ? `<div class="meta-list">
+                 ${r.subjectGrade ? `<div class="meta-item"><span class="meta-label">Subject &amp; Grade</span><span class="meta-value">${escapeHtml(r.subjectGrade)}</span></div>` : ''}
+                 ${r.duration ? `<div class="meta-item"><span class="meta-label">Duration</span><span class="meta-value">${escapeHtml(r.duration)}</span></div>` : ''}
+               </div>`
+            : ''
+        }
+
         <div class="private-box">
           <div class="private-box-title">🔒 Private Moderator Verification</div>
           <div><strong>Community:</strong> ${escapeHtml(r.community || '—')}</div>

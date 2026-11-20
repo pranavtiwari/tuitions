@@ -311,12 +311,20 @@ function renderCards(teachers) {
                         refs.length
                           ? refs
                               .map(
-                                (r) => `
-                                  <div class="ref-item">
-                                    <div class="ref-author">${escapeHtml(r.parentName)}</div>
-                                    <div class="ref-review">${escapeHtml(r.review)}</div>
-                                  </div>
-                                `
+                                (r) => {
+                                  const metaParts = [r.subjectGrade, r.duration].filter(Boolean);
+                                  return `
+                                    <div class="ref-item">
+                                      <div class="ref-author">${escapeHtml(r.parentName)}</div>
+                                      ${
+                                        metaParts.length
+                                          ? `<div style="font-size:0.76rem;color:var(--text-light);margin-bottom:0.25rem;">${escapeHtml(metaParts.join(' · '))}</div>`
+                                          : ''
+                                      }
+                                      <div class="ref-review">${escapeHtml(r.review)}</div>
+                                    </div>
+                                  `;
+                                }
                               )
                               .join('')
                           : '<div class="refs-empty">No parent references yet.</div>'
@@ -461,6 +469,8 @@ refForm.addEventListener('submit', async (e) => {
   refModalAlert.style.display = 'none';
 
   const parentName = document.getElementById('refParentName').value.trim();
+  const subjectGrade = document.getElementById('refSubjectGrade').value.trim();
+  const duration = document.getElementById('refDuration').value.trim();
   const review = document.getElementById('refReview').value.trim();
   const parentPhone = document.getElementById('refParentPhone').value.trim();
   const community = document.getElementById('refCommunity').value.trim();
@@ -471,7 +481,7 @@ refForm.addEventListener('submit', async (e) => {
     refModalAlert.style.display = 'flex';
   };
 
-  if (!parentName || !review || !parentPhone || !community) {
+  if (!parentName || !subjectGrade || !duration || !review || !parentPhone || !community) {
     return showRefError('Please fill in all required fields.');
   }
   if (review.length < 10) {
@@ -489,6 +499,8 @@ refForm.addEventListener('submit', async (e) => {
       teacherName: activeRefTeacher.name,
       teacherContact: activeRefTeacher.contact,
       parentName,
+      subjectGrade,
+      duration,
       parentPhone,
       community,
       review,

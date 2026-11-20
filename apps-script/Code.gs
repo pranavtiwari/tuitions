@@ -43,6 +43,8 @@ const REFERENCES_HEADERS = [
   'Community / Apartment',
   'Review',
   'Status',
+  'Subject & Grade',
+  'Duration',
 ];
 
 function jsonResponse(obj) {
@@ -98,6 +100,12 @@ function getOrCreateReferencesSheet() {
     sheet = ss.insertSheet(REFERENCES_SHEET_NAME);
     sheet.getRange(1, 1, 1, REFERENCES_HEADERS.length).setValues([REFERENCES_HEADERS]);
     sheet.setFrozenRows(1);
+  } else {
+    const existingCols = sheet.getLastColumn();
+    if (existingCols < REFERENCES_HEADERS.length) {
+      const missing = REFERENCES_HEADERS.slice(existingCols);
+      sheet.getRange(1, existingCols + 1, 1, missing.length).setValues([missing]);
+    }
   }
   return sheet;
 }
@@ -402,7 +410,8 @@ function getPublicApprovedReferences() {
   const lastRow = sheet.getLastRow();
   if (lastRow <= 1) return [];
 
-  const values = sheet.getRange(2, 1, lastRow - 1, REFERENCES_HEADERS.length).getDisplayValues();
+  const numCols = Math.max(sheet.getLastColumn(), REFERENCES_HEADERS.length);
+  const values = sheet.getRange(2, 1, lastRow - 1, numCols).getDisplayValues();
   const approved = [];
   for (let i = 0; i < values.length; i++) {
     const r = values[i];
@@ -415,6 +424,8 @@ function getPublicApprovedReferences() {
       teacherName: r[3],
       parentName: r[5],
       review: r[8],
+      subjectGrade: (r[10] || '').trim(),
+      duration: (r[11] || '').trim(),
     });
   }
   return approved;
@@ -425,7 +436,8 @@ function getAllReferencesAdmin() {
   const lastRow = sheet.getLastRow();
   if (lastRow <= 1) return [];
 
-  const values = sheet.getRange(2, 1, lastRow - 1, REFERENCES_HEADERS.length).getDisplayValues();
+  const numCols = Math.max(sheet.getLastColumn(), REFERENCES_HEADERS.length);
+  const values = sheet.getRange(2, 1, lastRow - 1, numCols).getDisplayValues();
   const list = [];
   for (let i = 0; i < values.length; i++) {
     const r = values[i];
@@ -441,6 +453,8 @@ function getAllReferencesAdmin() {
       community: r[7],
       review: r[8],
       status: (r[9] || 'Pending').trim(),
+      subjectGrade: (r[10] || '').trim(),
+      duration: (r[11] || '').trim(),
     });
   }
   return list;
@@ -509,6 +523,8 @@ function handleSubmitReference(data) {
     safeCell(data.community),
     safeCell(data.review),
     'Pending',
+    safeCell(data.subjectGrade || ''),
+    safeCell(data.duration || ''),
   ]);
 
   return { ok: true, id };

@@ -33,6 +33,67 @@ export function normalizeBoard(raw) {
 }
 
 /**
+ * Extract canonical individual subject tags from a raw sheet Subject string.
+ * Splits combined entries like "Maths , Physics & Chem" or "Eng, Maths, Sci & Social Studies"
+ * into clean individual subjects: ["Maths", "Physics", "Chemistry"], etc.
+ */
+export function extractSubjectTags(raw) {
+  const str = (raw || '').trim();
+  if (!str) return [];
+
+  // Keep "All Subjects" variants as "All Subjects"
+  if (/^all\s+subjects?/i.test(str)) {
+    return ['All Subjects'];
+  }
+
+  // Keep "Communication / Social Skills Dev" intact rather than splitting on "/"
+  if (/communication/i.test(str) && /social\s+skills/i.test(str)) {
+    return ['Communication / Social Skills'];
+  }
+
+  // Handle "Phonetics (English)" -> ["Phonetics", "English"]
+  const normalized = str.replace(/\(([^)]+)\)/g, ', $1');
+
+  // Split on ",", "&", "/", or word "and"
+  const parts = normalized
+    .split(/\s*(?:,|&|\/|\band\b)\s*/i)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const canonicalize = (token) => {
+    const low = token.toLowerCase().replace(/\s+/g, ' ');
+    if (low === 'math' || low === 'maths' || low === 'mathematics') return 'Maths';
+    if (low === 'chem' || low === 'chemistry') return 'Chemistry';
+    if (low === 'phy' || low === 'physics') return 'Physics';
+    if (low === 'bio' || low === 'biology') return 'Biology';
+    if (low === 'eng' || low === 'english') return 'English';
+    if (low === 'sci' || low === 'science') return 'Science';
+    if (low === 'sst' || low === 'social studies') return 'Social Studies';
+    if (low === 'comp' || low === 'computer' || low === 'computers') return 'Computers';
+    if (low === 'eco' || low === 'economics') return 'Economics';
+    if (low === 'handwritting' || low === 'handwriting' || low === 'handwriting improvement') {
+      return 'Handwriting';
+    }
+    if (low === 'phonetics') return 'Phonetics';
+    if (low === 'hindi') return 'Hindi';
+    if (low === 'kannada') return 'Kannada';
+    if (low === 'sanskrit') return 'Sanskrit';
+    if (low === 'french') return 'French';
+    if (low === 'spanish') return 'Spanish';
+    if (low === 'art') return 'Art';
+    if (low === 'abacus') return 'Abacus';
+    if (low === 'public speaking') return 'Public Speaking';
+    if (low === 'business studies') return 'Business Studies';
+    if (low === 'learning aid') return 'Learning Aid';
+
+    // Default: Title Case
+    return token.replace(/\b\w/g, (ch) => ch.toUpperCase());
+  };
+
+  return [...new Set(parts.map(canonicalize))];
+}
+
+/**
  * Extract canonical board tags for filtering (e.g., "CBSE + ICSE" -> ["CBSE", "ICSE"]).
  */
 export function extractBoardTags(raw) {

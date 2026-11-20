@@ -83,10 +83,32 @@
 
       <div class="filter-grid">
         <div class="filter-field">
-          <label for="subjectFilter">Subject</label>
-          <select id="subjectFilter">
-            <option value="">All Subjects</option>
-          </select>
+          <label id="subjectFilterLabel">Subject(s)</label>
+          <div class="multi-select" id="subjectMultiSelect">
+            <button
+              type="button"
+              id="subjectTrigger"
+              class="multi-select-trigger"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-labelledby="subjectFilterLabel subjectTrigger"
+            >
+              All Subjects
+            </button>
+            <div class="multi-select-menu" id="subjectMenu" role="listbox" aria-multiselectable="true">
+              <div class="multi-select-header">
+                <input
+                  type="search"
+                  id="subjectSearchInput"
+                  class="multi-select-search"
+                  placeholder="Filter subjects..."
+                  autocomplete="off"
+                />
+                <button type="button" id="clearSubjectsBtn" class="multi-select-clear">Clear</button>
+              </div>
+              <div class="multi-select-options" id="subjectOptions"></div>
+            </div>
+          </div>
         </div>
 
         <div class="filter-field">
@@ -118,6 +140,8 @@
           </select>
         </div>
       </div>
+
+      <div id="selectedSubjectsBar" class="selected-subjects-bar" style="display:none;"></div>
     </section>
 
     <div class="results-toolbar">

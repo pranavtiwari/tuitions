@@ -2,6 +2,7 @@ import {
   fetchTeachers,
   normalizeMode,
   normalizeBoard,
+  extractSubjectTags,
   extractBoardTags,
   formatExperience,
   formatPhoneLinks,
@@ -9,7 +10,12 @@ import {
 } from './api.js';
 
 const searchInput = document.getElementById('searchInput');
-const subjectFilter = document.getElementById('subjectFilter');
+const subjectMultiSelect = document.getElementById('subjectMultiSelect');
+const subjectTrigger = document.getElementById('subjectTrigger');
+const subjectSearchInput = document.getElementById('subjectSearchInput');
+const clearSubjectsBtn = document.getElementById('clearSubjectsBtn');
+const subjectOptions = document.getElementById('subjectOptions');
+const selectedSubjectsBar = document.getElementById('selectedSubjectsBar');
 const boardFilter = document.getElementById('boardFilter');
 const modeFilter = document.getElementById('modeFilter');
 const localityFilter = document.getElementById('localityFilter');
@@ -42,6 +48,8 @@ function updateStats(teachers) {
 }
 
 let allTeachers = [];
+let subjectEntries = []; // [{ name, count }]
+const selectedSubjects = new Set();
 let currentView = 'cards';
 
 function showToast(message) {
@@ -58,13 +66,83 @@ function getModeBadgeClass(normalizedMode) {
   return 'badge-neutral';
 }
 
+function renderSubjectOptions() {
+  const filterText = subjectSearchInput.value.trim().toLowerCase();
+  const visible = filterText
+    ? subjectEntries.filter((entry) => entry.name.toLowerCase().includes(filterText))
+    : subjectEntries;
+
+  if (!visible.length) {
+    subjectOptions.innerHTML =
+      '<div style="padding:0.75rem;text-align:center;font-size:0.84rem;color:var(--text-light);">No matching subjects</div>';
+    return;
+  }
+
+  subjectOptions.innerHTML = visible
+    .map((entry) => {
+      const checked = selectedSubjects.has(entry.name) ? 'checked' : '';
+      return `
+        <label class="multi-select-option">
+          <span class="multi-select-option-left">
+            <input type="checkbox" value="${escapeHtml(entry.name)}" ${checked} />
+            <span>${escapeHtml(entry.name)}</span>
+          </span>
+          <span class="multi-select-count">${entry.count}</span>
+        </label>
+      `;
+    })
+    .join('');
+}
+
+function updateSubjectUI() {
+  const picked = [...selectedSubjects];
+  if (picked.length === 0) {
+    subjectTrigger.textContent = 'All Subjects';
+    selectedSubjectsBar.style.display = 'none';
+    selectedSubjectsBar.innerHTML = '';
+  } else {
+    if (picked.length <= 2) {
+      subjectTrigger.textContent = picked.join(', ');
+    } else {
+      subjectTrigger.textContent = `${picked.slice(0, 2).join(', ')} +${picked.length - 2} more`;
+    }
+    selectedSubjectsBar.style.display = 'flex';
+    selectedSubjectsBar.innerHTML = picked
+      .map(
+        (subj) => `
+          <span class="selected-chip">
+            ${escapeHtml(subj)}
+            <button type="button" class="remove-subject-chip" data-subject="${escapeHtml(subj)}" aria-label="Remove ${escapeHtml(subj)}">×</button>
+          </span>
+        `
+      )
+      .join('');
+  }
+  renderSubjectOptions();
+}
+
+function setSubjectDropdownOpen(isOpen) {
+  subjectMultiSelect.classList.toggle('open', isOpen);
+  subjectTrigger.setAttribute('aria-expanded', String(isOpen));
+  if (isOpen) {
+    subjectSearchInput.focus();
+  }
+}
+
 function populateDropdowns(teachers) {
-  const subjects = [...new Set(teachers.map((t) => t.subject.trim()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
-  subjectFilter.innerHTML =
-    '<option value="">All Subjects</option>' +
-    subjects.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  const counts = new Map();
+  teachers.forEach((t) => {
+    t.subjectTags = extractSubjectTags(t.subject);
+    t.subjectTags.forEach((tag) => {
+      counts.set(tag, (counts.get(tag) || 0) + 1);
+    });
+  });
+
+  subjectEntries = [...counts.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  updateSubjectUI();
 
   const localities = [...new Set(teachers.map((t) => t.locality.trim()).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b)
@@ -76,14 +154,15 @@ function populateDropdowns(teachers) {
 
 function getFilteredTeachers() {
   const q = searchInput.value.trim().toLowerCase();
-  const subj = subjectFilter.value;
   const board = boardFilter.value;
   const mode = modeFilter.value;
   const locality = localityFilter.value;
 
   return allTeachers.filter((t) => {
-    if (subj && t.subject.trim().toLowerCase() !== subj.toLowerCase()) {
-      return false;
+    if (selectedSubjects.size > 0) {
+      const tags = t.subjectTags || [];
+      const matchesSubject = tags.some((tag) => selectedSubjects.has(tag));
+      if (!matchesSubject) return false;
     }
     if (board) {
       const tags = extractBoardTags(t.board);
@@ -284,14 +363,64 @@ resultsContainer.addEventListener('click', async (e) => {
   }
 });
 
-[searchInput, subjectFilter, boardFilter, modeFilter, localityFilter].forEach((el) => {
+// Multi-select Subject dropdown events
+subjectTrigger.addEventListener('click', () => {
+  const isOpen = subjectMultiSelect.classList.contains('open');
+  setSubjectDropdownOpen(!isOpen);
+});
+
+subjectSearchInput.addEventListener('input', renderSubjectOptions);
+
+subjectOptions.addEventListener('change', (e) => {
+  const cb = e.target.closest('input[type="checkbox"]');
+  if (!cb) return;
+  if (cb.checked) {
+    selectedSubjects.add(cb.value);
+  } else {
+    selectedSubjects.delete(cb.value);
+  }
+  updateSubjectUI();
+  render();
+});
+
+clearSubjectsBtn.addEventListener('click', () => {
+  selectedSubjects.clear();
+  subjectSearchInput.value = '';
+  updateSubjectUI();
+  render();
+});
+
+selectedSubjectsBar.addEventListener('click', (e) => {
+  const btn = e.target.closest('.remove-subject-chip');
+  if (!btn) return;
+  selectedSubjects.delete(btn.dataset.subject);
+  updateSubjectUI();
+  render();
+});
+
+document.addEventListener('click', (e) => {
+  if (!subjectMultiSelect.contains(e.target)) {
+    setSubjectDropdownOpen(false);
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && subjectMultiSelect.classList.contains('open')) {
+    setSubjectDropdownOpen(false);
+    subjectTrigger.focus();
+  }
+});
+
+[searchInput, boardFilter, modeFilter, localityFilter].forEach((el) => {
   el.addEventListener('input', render);
   el.addEventListener('change', render);
 });
 
 resetFiltersBtn.addEventListener('click', () => {
   searchInput.value = '';
-  subjectFilter.value = '';
+  selectedSubjects.clear();
+  subjectSearchInput.value = '';
+  updateSubjectUI();
   boardFilter.value = '';
   modeFilter.value = '';
   localityFilter.value = '';

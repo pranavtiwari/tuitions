@@ -3,26 +3,26 @@
    ========================================================================== */
 
 :root {
-  --bg: #f0f6fc;
+  --bg: #f6f7f4;
   --bg-hero: #ffffff;
   --surface: #ffffff;
-  --surface-subtle: #e8f1fb;
-  --surface-hover: #f5f9ff;
-  --border: #d6e4f2;
-  --border-strong: #b8d0e8;
+  --surface-subtle: #eef2ed;
+  --surface-hover: #f8faf7;
+  --border: #dde3dc;
+  --border-strong: #c5cfc4;
 
-  --text: #0f172a;
-  --text-muted: #334155;
-  --text-light: #64748b;
+  --text: #18211c;
+  --text-muted: #4b5951;
+  --text-light: #6c7a71;
 
-  --primary: #1e3a8a;
-  --primary-hover: #172554;
-  --primary-soft: #e0f2fe;
-  --primary-soft-border: #bae6fd;
-  --primary-ring: rgba(30, 58, 138, 0.18);
+  --primary: #3f6251;
+  --primary-hover: #314e40;
+  --primary-soft: #e7f0eb;
+  --primary-soft-border: #c7ddd1;
+  --primary-ring: rgba(63, 98, 81, 0.18);
 
-  --accent: #0284c7;
-  --accent-soft: #f0f9ff;
+  --accent: #c2845b;
+  --accent-soft: #fdf5ef;
 
   --online-bg: #f0f9ff;
   --online-border: #bae6fd;
@@ -140,11 +140,11 @@ button, input, select, textarea {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+  background: linear-gradient(135deg, #4f7a65 0%, #3f6251 100%);
   color: #fff;
   display: grid;
   place-items: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 2px 6px rgba(30, 58, 138, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 6px rgba(63, 98, 81, 0.24);
   flex-shrink: 0;
 }
 
@@ -190,8 +190,8 @@ button, input, select, textarea {
 /* ---------- Page Hero ---------- */
 .page-hero {
   background:
-    radial-gradient(800px 260px at 90% -20%, rgba(30, 58, 138, 0.1), transparent 65%),
-    radial-gradient(600px 220px at 10% 110%, rgba(56, 189, 248, 0.16), transparent 60%),
+    radial-gradient(800px 260px at 90% -20%, rgba(63, 98, 81, 0.09), transparent 65%),
+    radial-gradient(600px 220px at 10% 110%, rgba(194, 132, 91, 0.08), transparent 60%),
     var(--bg-hero);
   border-bottom: 1px solid var(--border);
 }
@@ -384,7 +384,7 @@ button, input, select, textarea {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
-  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.26);
+  box-shadow: 0 2px 8px rgba(63, 98, 81, 0.24);
 }
 
 .btn-secondary {

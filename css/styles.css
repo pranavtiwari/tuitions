@@ -3,26 +3,26 @@
    ========================================================================== */
 
 :root {
-  --bg: #f6f6f3;
+  --bg: #f0f6fc;
   --bg-hero: #ffffff;
   --surface: #ffffff;
-  --surface-subtle: #f3f4f2;
-  --surface-hover: #f9faf8;
-  --border: #e5e7e4;
-  --border-strong: #cfd4cf;
+  --surface-subtle: #e8f1fb;
+  --surface-hover: #f5f9ff;
+  --border: #d6e4f2;
+  --border-strong: #b8d0e8;
 
-  --text: #111817;
-  --text-muted: #4b5754;
-  --text-light: #6b7774;
+  --text: #0f172a;
+  --text-muted: #334155;
+  --text-light: #64748b;
 
-  --primary: #134e4a;
-  --primary-hover: #0f3f3c;
-  --primary-soft: #ecfdf5;
-  --primary-soft-border: #bbf7d0;
-  --primary-ring: rgba(19, 78, 74, 0.16);
+  --primary: #1e3a8a;
+  --primary-hover: #172554;
+  --primary-soft: #e0f2fe;
+  --primary-soft-border: #bae6fd;
+  --primary-ring: rgba(30, 58, 138, 0.18);
 
-  --accent: #b45309;
-  --accent-soft: #fffbeb;
+  --accent: #0284c7;
+  --accent-soft: #f0f9ff;
 
   --online-bg: #f0f9ff;
   --online-border: #bae6fd;
@@ -140,11 +140,11 @@ button, input, select, textarea {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #134e4a 0%, #0f3f3c 100%);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   color: #fff;
   display: grid;
   place-items: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 2px 6px rgba(19, 78, 74, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 2px 6px rgba(30, 58, 138, 0.28);
   flex-shrink: 0;
 }
 
@@ -190,8 +190,8 @@ button, input, select, textarea {
 /* ---------- Page Hero ---------- */
 .page-hero {
   background:
-    radial-gradient(800px 260px at 90% -20%, rgba(19, 78, 74, 0.08), transparent 65%),
-    radial-gradient(600px 220px at 10% 110%, rgba(180, 83, 9, 0.05), transparent 60%),
+    radial-gradient(800px 260px at 90% -20%, rgba(30, 58, 138, 0.1), transparent 65%),
+    radial-gradient(600px 220px at 10% 110%, rgba(56, 189, 248, 0.16), transparent 60%),
     var(--bg-hero);
   border-bottom: 1px solid var(--border);
 }
@@ -384,7 +384,7 @@ button, input, select, textarea {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
-  box-shadow: 0 2px 8px rgba(19, 78, 74, 0.24);
+  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.26);
 }
 
 .btn-secondary {
@@ -1427,8 +1427,8 @@ tbody tr:hover {
 }
 
 .private-box {
-  background: var(--accent-soft, #fdf0e6);
-  border: 1px solid #f4d1b5;
+  background: var(--accent-soft, #f0f9ff);
+  border: 1px solid var(--primary-soft-border, #bae6fd);
   border-radius: var(--radius-sm);
   padding: 0.65rem 0.8rem;
   font-size: 0.83rem;

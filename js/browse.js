@@ -4,6 +4,7 @@ import {
   normalizeMode,
   normalizeBoard,
   extractSubjectTags,
+  matchesGradeFilter,
   extractBoardTags,
   formatExperience,
   formatPhoneLinks,
@@ -17,6 +18,7 @@ const subjectSearchInput = document.getElementById('subjectSearchInput');
 const clearSubjectsBtn = document.getElementById('clearSubjectsBtn');
 const subjectOptions = document.getElementById('subjectOptions');
 const selectedSubjectsBar = document.getElementById('selectedSubjectsBar');
+const gradeFilter = document.getElementById('gradeFilter');
 const boardFilter = document.getElementById('boardFilter');
 const modeFilter = document.getElementById('modeFilter');
 const localityFilter = document.getElementById('localityFilter');
@@ -174,6 +176,7 @@ function populateDropdowns(teachers) {
 
 function getFilteredTeachers() {
   const q = searchInput.value.trim().toLowerCase();
+  const grade = gradeFilter.value;
   const board = boardFilter.value;
   const mode = modeFilter.value;
   const locality = localityFilter.value;
@@ -183,6 +186,9 @@ function getFilteredTeachers() {
       const tags = t.subjectTags || [];
       const matchesSubject = tags.some((tag) => selectedSubjects.has(tag));
       if (!matchesSubject) return false;
+    }
+    if (grade && !matchesGradeFilter(t.grades, grade)) {
+      return false;
     }
     if (board) {
       const tags = extractBoardTags(t.board);
@@ -545,7 +551,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-[searchInput, boardFilter, modeFilter, localityFilter].forEach((el) => {
+[searchInput, gradeFilter, boardFilter, modeFilter, localityFilter].forEach((el) => {
   el.addEventListener('input', render);
   el.addEventListener('change', render);
 });
@@ -555,6 +561,7 @@ resetFiltersBtn.addEventListener('click', () => {
   selectedSubjects.clear();
   subjectSearchInput.value = '';
   updateSubjectUI();
+  gradeFilter.value = '';
   boardFilter.value = '';
   modeFilter.value = '';
   localityFilter.value = '';

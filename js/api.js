@@ -94,6 +94,58 @@ export function extractSubjectTags(raw) {
 }
 
 /**
+ * Check whether a teacher's raw Grade(s) string covers the selected grade filter.
+ * selectedGrade is 'early' (Early Learners / KG) or a numeric string '1'..'12'.
+ */
+export function matchesGradeFilter(rawGrade, selectedGrade) {
+  if (!selectedGrade) return true;
+  const val = (rawGrade || '').trim().toLowerCase();
+  if (!val || /^n\.?a\.?$/.test(val)) return false;
+
+  if (val.includes('all grade')) return true;
+
+  if (selectedGrade === 'early') {
+    return val.includes('early') || val.includes('kg') || val.includes('pre') || val.includes('nursery');
+  }
+
+  const target = Number(selectedGrade);
+  if (isNaN(target)) return false;
+
+  if (val.includes('primary') && target >= 1 && target <= 5) return true;
+  if (val.includes('middle') && target >= 6 && target <= 8) return true;
+  if (val.includes('senior') && target >= 9 && target <= 12) return true;
+
+  // Handle "KG to 5" -> grades 1..5
+  const kgRange = val.match(/kg\s*(?:to|-|–)\s*(\d{1,2})/);
+  if (kgRange) {
+    const end = Number(kgRange[1]);
+    if (target >= 1 && target <= end) return true;
+  }
+
+  // Handle numeric ranges like "1 to 10", "Grade 6 - 12", "9-12"
+  const rangeRegex = /(\d{1,2})\s*(?:to|-|–)\s*(\d{1,2})/g;
+  let match;
+  let foundRange = false;
+  while ((match = rangeRegex.exec(val)) !== null) {
+    foundRange = true;
+    const start = Number(match[1]);
+    const end = Number(match[2]);
+    if (target >= Math.min(start, end) && target <= Math.max(start, end)) {
+      return true;
+    }
+  }
+  if (foundRange) return false;
+
+  // Fallback: standalone grade numbers (e.g. "Grade 10" or "9, 10")
+  const nums = val.match(/\b\d{1,2}\b/g);
+  if (nums && nums.some((n) => Number(n) === target)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Extract canonical board tags for filtering (e.g., "CBSE + ICSE" -> ["CBSE", "ICSE"]).
  */
 export function extractBoardTags(raw) {

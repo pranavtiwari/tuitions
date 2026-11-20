@@ -178,6 +178,46 @@
     </div>
   </main>
 
+  <!-- Add Parent Reference Modal -->
+  <div id="refModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="refModalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="refModalTitle">Add a Parent Reference</h2>
+        <button type="button" id="closeRefModalBtn" class="btn btn-secondary btn-sm" aria-label="Close">✕</button>
+      </div>
+      <p id="refModalSubtitle" style="margin:0 0 1rem;font-size:0.9rem;color:var(--text-muted);"></p>
+      <div id="refModalAlert" style="display:none;"></div>
+      <form id="refForm">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label for="refParentName">Your Name <span class="required">*</span></label>
+            <input type="text" id="refParentName" class="form-control" placeholder="e.g. Ananya M." required />
+            <span class="hint">Displayed publicly alongside your review.</span>
+          </div>
+          <div class="form-group full">
+            <label for="refReview">Your Review / Experience <span class="required">*</span></label>
+            <textarea id="refReview" rows="3" class="form-control" placeholder="Share how this teacher helped your child (teaching style, punctuality, results)..." required></textarea>
+            <span class="hint">Displayed publicly after moderator approval.</span>
+          </div>
+          <div class="form-group">
+            <label for="refParentPhone">Your Phone / WhatsApp <span class="required">*</span></label>
+            <input type="tel" id="refParentPhone" class="form-control" placeholder="e.g. 9876543210" required />
+            <span class="hint">🔒 Private — moderator verification only, never shown publicly.</span>
+          </div>
+          <div class="form-group">
+            <label for="refCommunity">Apartment / Community <span class="required">*</span></label>
+            <input type="text" id="refCommunity" class="form-control" placeholder="e.g. Prestige Ozone, Tower 4" required />
+            <span class="hint">🔒 Private — moderator verification only, never shown publicly.</span>
+          </div>
+        </div>
+        <div style="margin-top:1.25rem;display:flex;justify-content:flex-end;gap:0.6rem;">
+          <button type="button" id="cancelRefModalBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="submitRefBtn" class="btn btn-primary">Submit Reference</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <footer class="site-footer">
     <div class="footer-inner">
       <span>Teacher Directory &middot; Community-maintained recommendations</span>

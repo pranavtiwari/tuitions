@@ -3,12 +3,16 @@ import {
   verifyAdminPasscode,
   fetchPendingRequests,
   fetchTeachers,
+  fetchAdminReferences,
   approveRequest,
   rejectRequest,
+  approveParentReference,
+  deleteParentReference,
   updateTeacher,
   deleteTeacher,
   normalizeMode,
   formatExperience,
+  formatPhoneLinks,
   escapeHtml,
 } from './api.js';
 
@@ -25,12 +29,16 @@ const loginError = document.getElementById('loginError');
 const refreshBtn = document.getElementById('refreshBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const tabPending = document.getElementById('tabPending');
+const tabReferences = document.getElementById('tabReferences');
 const tabApproved = document.getElementById('tabApproved');
 const pendingCount = document.getElementById('pendingCount');
+const referencesCount = document.getElementById('referencesCount');
 const approvedCount = document.getElementById('approvedCount');
 const pendingPanel = document.getElementById('pendingPanel');
+const referencesPanel = document.getElementById('referencesPanel');
 const approvedPanel = document.getElementById('approvedPanel');
 const pendingContainer = document.getElementById('pendingContainer');
+const referencesContainer = document.getElementById('referencesContainer');
 const approvedContainer = document.getElementById('approvedContainer');
 const adminSearchInput = document.getElementById('adminSearchInput');
 
@@ -44,6 +52,7 @@ const toastEl = document.getElementById('toast');
 
 let adminPasscode = sessionStorage.getItem(SESSION_KEY) || '';
 let pendingList = [];
+let referencesList = [];
 let approvedList = [];
 let modalContext = null; // { type: 'approve', item } | { type: 'editApproved', item }
 
@@ -65,15 +74,21 @@ function showLoginError(msg) {
 
 function switchTab(tab) {
   const isPending = tab === 'pending';
+  const isRefs = tab === 'references';
+  const isApproved = tab === 'approved';
   tabPending.classList.toggle('active', isPending);
   tabPending.setAttribute('aria-selected', String(isPending));
-  tabApproved.classList.toggle('active', !isPending);
-  tabApproved.setAttribute('aria-selected', String(!isPending));
+  tabReferences.classList.toggle('active', isRefs);
+  tabReferences.setAttribute('aria-selected', String(isRefs));
+  tabApproved.classList.toggle('active', isApproved);
+  tabApproved.setAttribute('aria-selected', String(isApproved));
   pendingPanel.style.display = isPending ? 'block' : 'none';
-  approvedPanel.style.display = isPending ? 'none' : 'block';
+  referencesPanel.style.display = isRefs ? 'block' : 'none';
+  approvedPanel.style.display = isApproved ? 'block' : 'none';
 }
 
 tabPending.addEventListener('click', () => switchTab('pending'));
+tabReferences.addEventListener('click', () => switchTab('references'));
 tabApproved.addEventListener('click', () => switchTab('approved'));
 
 function openModal(context) {
@@ -270,19 +285,98 @@ function renderApproved() {
   `;
 }
 
+function renderReferences() {
+  const pendingRefs = referencesList.filter((r) => (r.status || '').toLowerCase() !== 'approved');
+  const approvedRefs = referencesList.filter((r) => (r.status || '').toLowerCase() === 'approved');
+  referencesCount.textContent = String(pendingRefs.length);
+
+  if (!referencesList.length) {
+    referencesContainer.innerHTML = `
+      <div class="state-box">
+        <strong>No parent references yet.</strong>
+        <p style="margin:0.4rem 0 0;">Parent recommendations submitted from the directory will appear here for verification.</p>
+      </div>`;
+    return;
+  }
+
+  const renderRefCard = (r, isPending) => {
+    const submittedDate = r.submittedAt
+      ? new Date(r.submittedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+      : '';
+    const phone = formatPhoneLinks(r.parentPhone);
+    return `
+      <article class="teacher-card">
+        <div class="card-top">
+          <div>
+            <h2 class="teacher-name">${escapeHtml(r.parentName)}</h2>
+            <span class="subject-tag">For: ${escapeHtml(r.teacherName)}${r.teacherSl ? ` (#${escapeHtml(r.teacherSl)})` : ''}</span>
+          </div>
+          <span class="badge ${isPending ? 'badge-pending' : 'badge-online'}">${isPending ? 'Pending' : 'Approved'}</span>
+        </div>
+
+        <div class="teacher-comments">${escapeHtml(r.review)}</div>
+
+        <div class="private-box">
+          <div class="private-box-title">🔒 Private Moderator Verification</div>
+          <div><strong>Community:</strong> ${escapeHtml(r.community || '—')}</div>
+          <div>
+            <strong>Parent Phone:</strong> ${escapeHtml(r.parentPhone || '—')}
+            ${phone ? ` · <a href="${escapeHtml(phone.whatsapp)}" target="_blank" rel="noopener" style="color:var(--primary);font-weight:700;">Verify on WhatsApp ↗</a>` : ''}
+          </div>
+          ${submittedDate ? `<div style="font-size:0.76rem;color:var(--text-light);margin-top:0.2rem;">Submitted ${escapeHtml(submittedDate)}</div>` : ''}
+        </div>
+
+        <div class="card-actions" style="justify-content:flex-end;">
+          ${
+            isPending
+              ? `<button type="button" class="btn btn-danger btn-sm reject-ref-btn" data-id="${escapeHtml(r.id)}">Reject</button>
+                 <button type="button" class="btn btn-success btn-sm approve-ref-btn" data-id="${escapeHtml(r.id)}">Approve</button>`
+              : `<button type="button" class="btn btn-danger btn-sm reject-ref-btn" data-id="${escapeHtml(r.id)}">Delete</button>`
+          }
+        </div>
+      </article>
+    `;
+  };
+
+  referencesContainer.innerHTML = `
+    ${
+      pendingRefs.length
+        ? `<h3 style="margin:0 0 0.85rem;font-size:1rem;">Awaiting Verification (${pendingRefs.length})</h3>
+           <div class="teacher-grid" style="margin-bottom:2rem;">
+             ${pendingRefs.map((r) => renderRefCard(r, true)).join('')}
+           </div>`
+        : `<div class="state-box" style="margin-bottom:1.5rem;padding:1.75rem;">
+             <strong>All parent references reviewed!</strong>
+           </div>`
+    }
+    ${
+      approvedRefs.length
+        ? `<h3 style="margin:0 0 0.85rem;font-size:1rem;">Published References (${approvedRefs.length})</h3>
+           <div class="teacher-grid">
+             ${approvedRefs.map((r) => renderRefCard(r, false)).join('')}
+           </div>`
+        : ''
+    }
+  `;
+}
+
 async function loadDashboardData() {
   pendingContainer.innerHTML = '<div class="state-box"><div class="spinner"></div><div>Loading pending requests...</div></div>';
+  referencesContainer.innerHTML = '<div class="state-box"><div class="spinner"></div><div>Loading parent references...</div></div>';
   approvedContainer.innerHTML = '<div class="state-box"><div class="spinner"></div><div>Loading directory...</div></div>';
   refreshBtn.disabled = true;
 
   try {
-    const [pending, { teachers }] = await Promise.all([
+    const [pending, references, { teachers }] = await Promise.all([
       fetchPendingRequests(adminPasscode),
+      fetchAdminReferences(adminPasscode).catch(() => []),
       fetchTeachers(),
     ]);
     pendingList = pending;
+    referencesList = references;
     approvedList = teachers;
     renderPending();
+    renderReferences();
     renderApproved();
   } catch (err) {
     showToast(`Error: ${err.message}`);
@@ -438,6 +532,42 @@ editForm.addEventListener('submit', async (e) => {
     showToast(`Error: ${err.message}`);
   } finally {
     saveModalBtn.disabled = false;
+  }
+});
+
+// Reference moderation actions
+referencesContainer.addEventListener('click', async (e) => {
+  const approveBtn = e.target.closest('.approve-ref-btn');
+  const rejectBtn = e.target.closest('.reject-ref-btn');
+
+  if (approveBtn) {
+    const id = approveBtn.dataset.id;
+    approveBtn.disabled = true;
+    approveBtn.textContent = 'Approving...';
+    try {
+      await approveParentReference(adminPasscode, id);
+      showToast('Parent reference approved & published');
+      await loadDashboardData();
+    } catch (err) {
+      showToast(`Error: ${err.message}`);
+      approveBtn.disabled = false;
+      approveBtn.textContent = 'Approve';
+    }
+  } else if (rejectBtn) {
+    const id = rejectBtn.dataset.id;
+    const label = rejectBtn.textContent.trim();
+    if (!confirm(`${label} this parent reference?`)) return;
+    rejectBtn.disabled = true;
+    rejectBtn.textContent = 'Removing...';
+    try {
+      await deleteParentReference(adminPasscode, id);
+      showToast('Parent reference removed');
+      await loadDashboardData();
+    } catch (err) {
+      showToast(`Error: ${err.message}`);
+      rejectBtn.disabled = false;
+      rejectBtn.textContent = label;
+    }
   }
 });
 

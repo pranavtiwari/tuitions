@@ -1,5 +1,6 @@
 import {
   fetchTeachers,
+  submitParentReference,
   normalizeMode,
   normalizeBoard,
   extractSubjectTags,
@@ -48,9 +49,28 @@ function updateStats(teachers) {
 }
 
 let allTeachers = [];
+let allReferences = [];
 let subjectEntries = []; // [{ name, count }]
 const selectedSubjects = new Set();
 let currentView = 'cards';
+let activeRefTeacher = null;
+
+const refModalBackdrop = document.getElementById('refModalBackdrop');
+const refModalSubtitle = document.getElementById('refModalSubtitle');
+const refModalAlert = document.getElementById('refModalAlert');
+const closeRefModalBtn = document.getElementById('closeRefModalBtn');
+const cancelRefModalBtn = document.getElementById('cancelRefModalBtn');
+const refForm = document.getElementById('refForm');
+const submitRefBtn = document.getElementById('submitRefBtn');
+
+function getReferencesForTeacher(teacher) {
+  return allReferences.filter((ref) => {
+    if (teacher.sl && ref.teacherSl) {
+      return String(ref.teacherSl).trim() === String(teacher.sl).trim();
+    }
+    return (ref.teacherName || '').trim().toLowerCase() === (teacher.name || '').trim().toLowerCase();
+  });
+}
 
 function showToast(message) {
   toastEl.textContent = message;
@@ -273,6 +293,41 @@ function renderCards(teachers) {
                     : ''
                 }
               </div>
+
+              ${(() => {
+                const refs = getReferencesForTeacher(t);
+                const teacherKey = t.sl || t.name;
+                return `
+                  <details class="refs-dropdown">
+                    <summary>Parent References (${refs.length})</summary>
+                    <div class="refs-body">
+                      ${
+                        refs.length
+                          ? refs
+                              .map(
+                                (r) => `
+                                  <div class="ref-item">
+                                    <div class="ref-author">${escapeHtml(r.parentName)}</div>
+                                    <div class="ref-review">${escapeHtml(r.review)}</div>
+                                  </div>
+                                `
+                              )
+                              .join('')
+                          : '<div class="refs-empty">No parent references yet.</div>'
+                      }
+                      <button
+                        type="button"
+                        class="btn btn-secondary btn-sm add-ref-btn"
+                        data-sl="${escapeHtml(t.sl || '')}"
+                        data-name="${escapeHtml(t.name)}"
+                        data-contact="${escapeHtml(t.contact || '')}"
+                        data-key="${escapeHtml(teacherKey)}"
+                        style="align-self:flex-start;"
+                      >+ Add a Parent Reference</button>
+                    </div>
+                  </details>
+                `;
+              })()}
             </article>
           `;
         })
@@ -352,14 +407,93 @@ function render() {
 }
 
 resultsContainer.addEventListener('click', async (e) => {
-  const btn = e.target.closest('.copy-btn');
-  if (!btn) return;
-  const phone = btn.dataset.phone;
+  const copyBtn = e.target.closest('.copy-btn');
+  if (copyBtn) {
+    const phone = copyBtn.dataset.phone;
+    try {
+      await navigator.clipboard.writeText(phone);
+      showToast(`Copied ${phone}`);
+    } catch {
+      showToast('Could not copy to clipboard');
+    }
+    return;
+  }
+
+  const addRefBtn = e.target.closest('.add-ref-btn');
+  if (addRefBtn) {
+    openRefModal({
+      sl: addRefBtn.dataset.sl,
+      name: addRefBtn.dataset.name,
+      contact: addRefBtn.dataset.contact,
+    });
+  }
+});
+
+function openRefModal(teacher) {
+  activeRefTeacher = teacher;
+  refForm.reset();
+  refModalAlert.style.display = 'none';
+  refModalSubtitle.textContent = `Recommending: ${teacher.name}`;
+  refModalBackdrop.classList.add('open');
+  document.getElementById('refParentName').focus();
+}
+
+function closeRefModal() {
+  refModalBackdrop.classList.remove('open');
+  activeRefTeacher = null;
+}
+
+closeRefModalBtn.addEventListener('click', closeRefModal);
+cancelRefModalBtn.addEventListener('click', closeRefModal);
+refModalBackdrop.addEventListener('click', (e) => {
+  if (e.target === refModalBackdrop) closeRefModal();
+});
+
+refForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!activeRefTeacher) return;
+  refModalAlert.style.display = 'none';
+
+  const parentName = document.getElementById('refParentName').value.trim();
+  const review = document.getElementById('refReview').value.trim();
+  const parentPhone = document.getElementById('refParentPhone').value.trim();
+  const community = document.getElementById('refCommunity').value.trim();
+
+  const showRefError = (msg) => {
+    refModalAlert.className = 'alert alert-danger';
+    refModalAlert.innerHTML = `<span>❌</span><div>${escapeHtml(msg)}</div>`;
+    refModalAlert.style.display = 'flex';
+  };
+
+  if (!parentName || !review || !parentPhone || !community) {
+    return showRefError('Please fill in all required fields.');
+  }
+  if (review.length < 10) {
+    return showRefError('Please write a brief review (at least 10 characters).');
+  }
+  if (parentPhone.replace(/\D/g, '').length < 7) {
+    return showRefError('Please enter a valid phone number.');
+  }
+
+  submitRefBtn.disabled = true;
+  submitRefBtn.textContent = 'Submitting...';
   try {
-    await navigator.clipboard.writeText(phone);
-    showToast(`Copied ${phone}`);
-  } catch {
-    showToast('Could not copy to clipboard');
+    await submitParentReference({
+      teacherSl: activeRefTeacher.sl,
+      teacherName: activeRefTeacher.name,
+      teacherContact: activeRefTeacher.contact,
+      parentName,
+      parentPhone,
+      community,
+      review,
+    });
+    closeRefModal();
+    showToast('Reference submitted! It will appear after moderator approval.');
+  } catch (err) {
+    showRefError(err.message);
+  } finally {
+    submitRefBtn.disabled = false;
+    submitRefBtn.textContent = 'Submit Reference';
   }
 });
 
@@ -443,8 +577,9 @@ tableViewBtn.addEventListener('click', () => {
 
 async function init() {
   try {
-    const { teachers } = await fetchTeachers();
+    const { teachers, references } = await fetchTeachers();
     allTeachers = teachers;
+    allReferences = references || [];
     updateStats(allTeachers);
     populateDropdowns(allTeachers);
     render();

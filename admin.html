@@ -96,6 +96,9 @@
         <button type="button" class="tab-btn active" id="tabPending" role="tab" aria-selected="true">
           Pending Requests <span class="count-pill" id="pendingCount">0</span>
         </button>
+        <button type="button" class="tab-btn" id="tabReferences" role="tab" aria-selected="false">
+          Parent References <span class="count-pill" id="referencesCount">0</span>
+        </button>
         <button type="button" class="tab-btn" id="tabApproved" role="tab" aria-selected="false">
           Approved Directory <span class="count-pill" id="approvedCount">0</span>
         </button>
@@ -104,6 +107,11 @@
       <!-- Pending Tab -->
       <div id="pendingPanel">
         <div id="pendingContainer"></div>
+      </div>
+
+      <!-- Parent References Tab -->
+      <div id="referencesPanel" style="display:none;">
+        <div id="referencesContainer"></div>
       </div>
 
       <!-- Approved Tab -->

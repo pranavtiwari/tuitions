@@ -14,6 +14,8 @@
  */
 
 const PENDING_SHEET_NAME = 'Pending';
+const REFERENCES_SHEET_NAME = 'References';
+
 const PENDING_HEADERS = [
   'ID',
   'Submitted At',
@@ -28,6 +30,19 @@ const PENDING_HEADERS = [
   'Comments',
   'Submitted By',
   'Experience (Years)',
+];
+
+const REFERENCES_HEADERS = [
+  'ID',
+  'Submitted At',
+  'Teacher Sl.',
+  'Teacher Name',
+  'Teacher Contact',
+  'Parent Name',
+  'Parent Phone',
+  'Community / Apartment',
+  'Review',
+  'Status',
 ];
 
 function jsonResponse(obj) {
@@ -51,7 +66,8 @@ function getMainSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheets = ss.getSheets();
   for (let i = 0; i < sheets.length; i++) {
-    if (sheets[i].getName() !== PENDING_SHEET_NAME) {
+    const name = sheets[i].getName();
+    if (name !== PENDING_SHEET_NAME && name !== REFERENCES_SHEET_NAME) {
       return sheets[i];
     }
   }
@@ -73,6 +89,23 @@ function getOrCreatePendingSheet() {
     }
   }
   return sheet;
+}
+
+function getOrCreateReferencesSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(REFERENCES_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(REFERENCES_SHEET_NAME);
+    sheet.getRange(1, 1, 1, REFERENCES_HEADERS.length).setValues([REFERENCES_HEADERS]);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function normalizePhoneDigits(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  // Compare last 10 digits when country code is present
+  return digits.length > 10 ? digits.slice(-10) : digits;
 }
 
 /**
@@ -362,11 +395,150 @@ function handleDeleteTeacher(rowIndex) {
   return { ok: true };
 }
 
+function getPublicApprovedReferences() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(REFERENCES_SHEET_NAME);
+  if (!sheet) return [];
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+
+  const values = sheet.getRange(2, 1, lastRow - 1, REFERENCES_HEADERS.length).getDisplayValues();
+  const approved = [];
+  for (let i = 0; i < values.length; i++) {
+    const r = values[i];
+    if ((r[9] || '').trim().toLowerCase() !== 'approved') continue;
+    // Privacy: NEVER expose Parent Phone (r[6]) or Community/Apartment (r[7]) publicly
+    approved.push({
+      id: r[0],
+      submittedAt: r[1],
+      teacherSl: r[2],
+      teacherName: r[3],
+      parentName: r[5],
+      review: r[8],
+    });
+  }
+  return approved;
+}
+
+function getAllReferencesAdmin() {
+  const sheet = getOrCreateReferencesSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+
+  const values = sheet.getRange(2, 1, lastRow - 1, REFERENCES_HEADERS.length).getDisplayValues();
+  const list = [];
+  for (let i = 0; i < values.length; i++) {
+    const r = values[i];
+    if (!r[0] && !r[5]) continue;
+    list.push({
+      id: r[0],
+      submittedAt: r[1],
+      teacherSl: r[2],
+      teacherName: r[3],
+      teacherContact: r[4],
+      parentName: r[5],
+      parentPhone: r[6],
+      community: r[7],
+      review: r[8],
+      status: (r[9] || 'Pending').trim(),
+    });
+  }
+  return list;
+}
+
+function findReferenceRowById(sheet, id) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return -1;
+  const ids = sheet.getRange(2, 1, lastRow - 1, 1).getDisplayValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i][0] === id) return i + 2;
+  }
+  return -1;
+}
+
+function handleSubmitReference(data) {
+  if (!data || !data.teacherName || !data.parentName || !data.parentPhone || !data.community || !data.review) {
+    throw new Error('Parent name, phone number, community/apartment, and review are all required.');
+  }
+
+  const parentDigits = normalizePhoneDigits(data.parentPhone);
+  if (parentDigits.length < 7) {
+    throw new Error('Please enter a valid parent phone number.');
+  }
+  if (String(data.review).trim().length < 10) {
+    throw new Error('Please write a brief review (at least 10 characters).');
+  }
+
+  // Anti-fake check 1: Block self-recommendation using the teacher's own phone number
+  const teacherDigits = normalizePhoneDigits(data.teacherContact);
+  if (teacherDigits && parentDigits === teacherDigits) {
+    throw new Error("A parent reference cannot use the teacher's own contact number.");
+  }
+
+  const sheet = getOrCreateReferencesSheet();
+  const teacherSl = String(data.teacherSl || '').trim();
+  const teacherName = String(data.teacherName || '').trim();
+
+  // Anti-fake check 2: Block duplicate reference from the same phone number for the same teacher
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    const existing = sheet.getRange(2, 1, lastRow - 1, REFERENCES_HEADERS.length).getDisplayValues();
+    for (let i = 0; i < existing.length; i++) {
+      const r = existing[i];
+      const sameTeacher =
+        (teacherSl && String(r[2]).trim() === teacherSl) ||
+        String(r[3]).trim().toLowerCase() === teacherName.toLowerCase();
+      const samePhone = normalizePhoneDigits(r[6]) === parentDigits;
+      if (sameTeacher && samePhone) {
+        throw new Error('A reference from this phone number has already been submitted for this teacher.');
+      }
+    }
+  }
+
+  const id = Utilities.getUuid();
+  const submittedAt = new Date().toISOString();
+
+  sheet.appendRow([
+    id,
+    submittedAt,
+    safeCell(teacherSl),
+    safeCell(teacherName),
+    safeCell(data.teacherContact || ''),
+    safeCell(data.parentName),
+    safeCell(data.parentPhone),
+    safeCell(data.community),
+    safeCell(data.review),
+    'Pending',
+  ]);
+
+  return { ok: true, id };
+}
+
+function handleApproveReference(id) {
+  const sheet = getOrCreateReferencesSheet();
+  const row = findReferenceRowById(sheet, id);
+  if (row < 0) throw new Error('Reference not found.');
+  sheet.getRange(row, 10).setValue('Approved');
+  return { ok: true };
+}
+
+function handleDeleteReference(id) {
+  const sheet = getOrCreateReferencesSheet();
+  const row = findReferenceRowById(sheet, id);
+  if (row < 0) throw new Error('Reference not found.');
+  sheet.deleteRow(row);
+  return { ok: true };
+}
+
 function doGet(e) {
   try {
     const action = (e && e.parameter && e.parameter.action) || 'teachers';
     if (action === 'teachers') {
-      return jsonResponse({ ok: true, teachers: getAllTeachers() });
+      return jsonResponse({
+        ok: true,
+        teachers: getAllTeachers(),
+        references: getPublicApprovedReferences(),
+      });
     }
     return jsonResponse({ ok: false, error: 'Unknown action: ' + action });
   } catch (err) {
@@ -385,6 +557,11 @@ function doPost(e) {
       return jsonResponse(handleSubmit(body.data));
     }
 
+    if (action === 'submitReference') {
+      lock.waitLock(10000);
+      return jsonResponse(handleSubmitReference(body.data));
+    }
+
     if (action === 'verifyAdmin') {
       verifyPasscode(body.passcode);
       return jsonResponse({ ok: true });
@@ -393,6 +570,23 @@ function doPost(e) {
     if (action === 'getPending') {
       verifyPasscode(body.passcode);
       return jsonResponse({ ok: true, pending: getPendingList() });
+    }
+
+    if (action === 'getReferences') {
+      verifyPasscode(body.passcode);
+      return jsonResponse({ ok: true, references: getAllReferencesAdmin() });
+    }
+
+    if (action === 'approveReference') {
+      verifyPasscode(body.passcode);
+      lock.waitLock(10000);
+      return jsonResponse(handleApproveReference(body.id));
+    }
+
+    if (action === 'rejectReference' || action === 'deleteReference') {
+      verifyPasscode(body.passcode);
+      lock.waitLock(10000);
+      return jsonResponse(handleDeleteReference(body.id));
     }
 
     if (action === 'approve') {

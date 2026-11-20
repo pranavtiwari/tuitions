@@ -308,7 +308,11 @@ export async function fetchTeachers() {
       if (res.ok) {
         const json = await res.json();
         if (json.ok && Array.isArray(json.teachers)) {
-          return { teachers: json.teachers, source: 'apps-script' };
+          return {
+            teachers: json.teachers,
+            references: Array.isArray(json.references) ? json.references : [],
+            source: 'apps-script',
+          };
         }
       }
     } catch (err) {
@@ -316,7 +320,50 @@ export async function fetchTeachers() {
     }
   }
   const teachers = await fetchTeachersFromCSV();
-  return { teachers, source: 'csv' };
+  return { teachers, references: [], source: 'csv' };
+}
+
+/**
+ * Public API: Submit a parent reference for a teacher (stored as Pending).
+ */
+export async function submitParentReference(data) {
+  return postToAppsScript({
+    action: 'submitReference',
+    data,
+  });
+}
+
+/**
+ * Admin API: Fetch all references (pending + approved, including private verification details).
+ */
+export async function fetchAdminReferences(passcode) {
+  const res = await postToAppsScript({
+    action: 'getReferences',
+    passcode,
+  });
+  return res.references || [];
+}
+
+/**
+ * Admin API: Approve a pending parent reference.
+ */
+export async function approveParentReference(passcode, id) {
+  return postToAppsScript({
+    action: 'approveReference',
+    passcode,
+    id,
+  });
+}
+
+/**
+ * Admin API: Reject or delete a parent reference.
+ */
+export async function deleteParentReference(passcode, id) {
+  return postToAppsScript({
+    action: 'deleteReference',
+    passcode,
+    id,
+  });
 }
 
 /**
